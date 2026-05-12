@@ -1,0 +1,10 @@
+#! /usr/bin/python3
+
+"""Copyright 2003-2013 by Konrad Voelkel and Reimer Backhaus.
+This program is distributed under the terms of the GNU General Public License.
+visit https://github.com/reims/wesen for versions > 2013
+or http://wesen.sourceforge.net for old versions of 2003,2004."""
+
+from src.wesen.loader import Loader
+print("Welcome to Wesen!")
+Loader()
