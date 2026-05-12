@@ -58,8 +58,8 @@ which makes it our choice.
 
 from numpy.random import randint
 
-from src.Wesen.loader import Loader
-from src.Wesen.defaults import DEFAULT_CONFIGFILE
+from src.wesen.loader import Loader
+from src.wesen.defaults import DEFAULT_CONFIGFILE
 
 from sys import argv
 from timeit import repeat as timeit_repeat

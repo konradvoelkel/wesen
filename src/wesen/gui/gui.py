@@ -115,7 +115,7 @@ class GUI(BasicGUI):
         buffer = (GLubyte * (3 * width * height))(0)
         glReadPixels(0, 0, width, height,
                      GL_RGB, GL_UNSIGNED_BYTE, buffer)
-        image = Image.fromstring(mode="RGB",
+        image = Image.frombytes(mode="RGB",
                                  size=(width, height),
                                  data=buffer)
         # use image coordinates, not OpenGL coordinates:
@@ -123,7 +123,7 @@ class GUI(BasicGUI):
         # take only the Map part of the screenshot:
         image = image.crop((0, 0, width // 2, height // 2))
         # resize to a uniform format (important for movie mode):
-        image = image.resize((800, 800), Image.ANTIALIAS)
+        image = image.resize((800, 800), Image.Resampling.LANCZOS)
         return image
 
     def RenderScene(self):

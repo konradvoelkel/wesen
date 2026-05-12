@@ -10,7 +10,7 @@ to profile your AI source code.
 
 In some tournaments, there is a penalty for computation cost."""
 
-from src.Wesen.loader import Loader
+from src.wesen.loader import Loader
 from cProfile import Profile
 from time import perf_counter
 # only in python3.3

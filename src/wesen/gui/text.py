@@ -82,7 +82,7 @@ class TextPrinter(object):
     def ResetRaster(self):
         """Call each frame before any Print()"""
         self.rasterPos = self.y
-        self.Print("\n")
+        #self.Print("\n")
 
     def Reshape(self, x, y):
         """Gets into good shape again"""
