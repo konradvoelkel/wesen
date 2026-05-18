@@ -36,3 +36,6 @@ screenshot.png
 
 debug.out
 profile.stats_before
+
+# Pylance
+uv.lock

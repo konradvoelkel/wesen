@@ -75,6 +75,7 @@ class BasicGUI(object):
         self.fgcolor = [0.0, 0.1, 0.2]
         self.colorList = colorList *\
             int(1 + len(self.infoWesen["sources"]) / len(colorList))
+        self._initGL(extraArgs)
         self.graph = Graph(self, self.world,
                            self.infoWesen["sources"],
                            self.colorList)
@@ -86,7 +87,6 @@ class BasicGUI(object):
         self.text.SetAspect(2, 1)
         # aspect ratio x:y is 2:1
         self.objects = [self.map, self.text]
-        self._initGL(extraArgs)
         self.menu = None
         self.initMenu()
         self.keybindings = dict()
