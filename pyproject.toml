@@ -3,7 +3,7 @@ name = "wesen"
 version = "0.3.0"
 description = "game where players program the behavior of their Wesens to defeat the other players"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 dependencies = [
     "numpy",
     "PyOpenGL>=3.1.0",
