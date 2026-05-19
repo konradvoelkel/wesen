@@ -1,12 +1,13 @@
 [project]
 name = "wesen"
-version = "0.1.0"
-description = "Völkels jagt"
+version = "0.3.0"
+description = "game where players program the behavior of their Wesens to defeat the other players"
+readme = "README.md"
 requires-python = ">=3.8"
 dependencies = [
     "numpy",
-    "PyOpenGL",
-    "Pillow",
+    "PyOpenGL>=3.1.0",
+    "Pillow>=12.2.0", # which versions are tested?
 ]
 
 [project.scripts]
@@ -18,3 +19,25 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.wesen.system-dependencies]
+apt = ["freeglut3-dev"]
+pacman = ["freeglut"]
+homebrew = ["freeglut"]
+
+[tool.uv]
+dev-dependencies = [
+    "ruff>=0.4.0",
+    "mypy>=1.10.0",
+]
+
+[tool.ruff]
+line-length = 80
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]
+
+[tool.mypy]
+strict = false
+warn_unused_configs = true
