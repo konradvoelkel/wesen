@@ -36,6 +36,10 @@ select = ["E", "F", "I", "UP"]
 strict = false
 warn_unused_configs = true
 
+[[tool.mypy.overrides]]
+module = "OpenGL.*"
+ignore_missing_imports = true
+
 [dependency-groups]
 dev = [
     "mypy>=2.1.0",

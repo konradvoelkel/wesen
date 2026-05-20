@@ -7,12 +7,13 @@ as this code only adds features on top:
 * world manipulation
 """
 
-from .basicgui import BasicGUI
 from OpenGL.GL import GL_RGB, GL_UNSIGNED_BYTE, glReadPixels
 from OpenGL.GLU import GLubyte
-from OpenGL.GLUT import GLUT_RIGHT_BUTTON, \
-    glutCreateMenu, glutAddMenuEntry, glutAttachMenu
+from OpenGL.GLUT import (GLUT_RIGHT_BUTTON, glutAddMenuEntry, glutAttachMenu,
+                         glutCreateMenu)
 from PIL import Image
+
+from .basicgui import BasicGUI
 
 cl_freak = [[0.4, 0.2, 0.6], [0.6, 0.2, 0.4],
             [0.8, 0.2, 0.2], [0.2, 0.2, 0.8],

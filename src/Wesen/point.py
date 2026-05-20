@@ -3,8 +3,9 @@ that come handy in writing an AI,
 and is used by Food.
 In future, this code might move elsewhere."""
 
-from numpy.random import randint
 from math import copysign
+
+from numpy.random import randint
 
 
 def getRandomPosition(length): # unused

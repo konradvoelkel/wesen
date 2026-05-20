@@ -4,13 +4,13 @@ Graph plots several curves,
 _SensorData plots a single curve."""
 
 from numpy import array as narray
-from OpenGL.GL import GL_VERTEX_ARRAY, GL_LINE_STRIP, \
-    GL_STREAM_DRAW, GL_ARRAY_BUFFER, GL_FLOAT, \
-    glPushMatrix, glPopMatrix, \
-    glScalef, glColor3f, glTranslatef, \
-    glEnableClientState, glDisableClientState, \
-    glVertexPointer, glDrawArrays
 from OpenGL.arrays import vbo
+from OpenGL.GL import (GL_ARRAY_BUFFER, GL_FLOAT, GL_LINE_STRIP,
+                       GL_STREAM_DRAW, GL_VERTEX_ARRAY, glColor3f,
+                       glDisableClientState, glDrawArrays, glEnableClientState,
+                       glPopMatrix, glPushMatrix, glScalef, glTranslatef,
+                       glVertexPointer)
+
 from .object import GuiObject
 from .text import TextPrinter
 

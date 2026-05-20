@@ -3,23 +3,20 @@ and interprets command-line arguments.
 It makes sure that the configured wesen sources exist.
 It then runs a Wesend instance."""
 
-from .defaults import DEFAULT_CONFIGFILE
-from .strings import VERSIONSTRING, \
-    STRING_USAGE_PRINTCONFIG, \
-    STRING_USAGE_DEFAULTCONFIG, \
-    STRING_USAGE_EDITCONFIG, \
-    STRING_USAGE_CONFIGFILE, \
-    STRING_USAGE_EPILOG, \
-    STRING_USAGE_DESCRIPTION, \
-    STRING_USAGE_RESUME, \
-    STRING_USAGE_OVERWRITE
-from .configed import ConfigEd
-from .wesend import Wesend
-from argparse import ArgumentParser, Action
-from os import mkdir
-from os.path import exists, join, expanduser
 import importlib
 import sys
+from argparse import Action, ArgumentParser
+from os import mkdir
+from os.path import exists, expanduser, join
+
+from .configed import ConfigEd
+from .defaults import DEFAULT_CONFIGFILE
+from .strings import (STRING_USAGE_CONFIGFILE, STRING_USAGE_DEFAULTCONFIG,
+                      STRING_USAGE_DESCRIPTION, STRING_USAGE_EDITCONFIG,
+                      STRING_USAGE_EPILOG, STRING_USAGE_OVERWRITE,
+                      STRING_USAGE_PRINTCONFIG, STRING_USAGE_RESUME,
+                      VERSIONSTRING)
+from .wesend import Wesend
 
 
 def Loader(run_immediately=True):

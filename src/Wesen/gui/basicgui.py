@@ -1,25 +1,27 @@
 """The basic OpenGL GUI code"""
 
-from ..strings import VERSIONSTRING
-from .map import Map
-from .text import Text
-from .graph import Graph
-from OpenGL.GL import glClearColor, glLineWidth, \
-    glEnable, glViewport, glTranslatef, \
-    glScale, glLoadIdentity, glClear, glMatrixMode, \
-    glPushMatrix, glPopMatrix, glFinish, GLError, \
-    GL_LINE_SMOOTH, GL_COLOR_BUFFER_BIT, GL_MODELVIEW
-from OpenGL.GLUT import glutMainLoop, glutInitDisplayMode, \
-    glutInitWindowSize, glutInitWindowPosition, glutInit, \
-    glutCreateWindow, glutDisplayFunc, glutIdleFunc, \
-    glutPostRedisplay, glutReshapeFunc, glutKeyboardFunc, \
-    glutSpecialFunc, glutMouseFunc, glutSwapBuffers, glutGet, \
-    GLUT_ELAPSED_TIME, GLUT_DOUBLE, GLUT_RGB
 import sys
 import traceback
 
 # TODO Error checking should be a config option.
 import OpenGL
+from OpenGL.GL import (GL_COLOR_BUFFER_BIT, GL_LINE_SMOOTH, GL_MODELVIEW,
+                       GLError, glClear, glClearColor, glEnable, glFinish,
+                       glLineWidth, glLoadIdentity, glMatrixMode, glPopMatrix,
+                       glPushMatrix, glScale, glTranslatef, glViewport)
+from OpenGL.GLUT import (GLUT_DOUBLE, GLUT_ELAPSED_TIME, GLUT_RGB,
+                         glutCreateWindow, glutDisplayFunc, glutGet,
+                         glutIdleFunc, glutInit, glutInitDisplayMode,
+                         glutInitWindowPosition, glutInitWindowSize,
+                         glutKeyboardFunc, glutMainLoop, glutMouseFunc,
+                         glutPostRedisplay, glutReshapeFunc, glutSpecialFunc,
+                         glutSwapBuffers)
+
+from ..strings import VERSIONSTRING
+from .graph import Graph
+from .map import Map
+from .text import Text
+
 OpenGL.ERROR_CHECKING = False
 # performance-relevant
 

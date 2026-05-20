@@ -1,7 +1,6 @@
 """string definitions"""
 
-from .defaults import DEFAULT_CONFIGFILE, \
-    DEFAULT_GAME_STATE_FILE
+from .defaults import DEFAULT_CONFIGFILE, DEFAULT_GAME_STATE_FILE
 
 # for I18N, insert here a stringtable-loader or replace this file.
 

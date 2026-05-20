@@ -3,12 +3,13 @@ with or without GUI,
 with or without savegame,
 provided a configuration is given."""
 
-from .defaults import DEFAULT_GAME_STATE_FILE
-from .world import World
-from pprint import pprint
-from os.path import exists
 import importlib
 import json
+from os.path import exists
+from pprint import pprint
+
+from .defaults import DEFAULT_GAME_STATE_FILE
+from .world import World
 
 # TODO change the name of this class (it is not a daemon)
 

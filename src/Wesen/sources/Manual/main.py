@@ -2,10 +2,11 @@
 for developers: manual (console) wesen programming
 """
 
-from ...defaultwesensource import DefaultWesenSource
 import re
 import readline
 import sys
+
+from ...defaultwesensource import DefaultWesenSource
 
 
 class WesenSource(DefaultWesenSource):

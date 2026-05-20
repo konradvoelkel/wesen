@@ -5,18 +5,18 @@ See also:
  strings.py for explanations used here,
  defaults.py for defaults used here."""
 
-from .defaults import CONFIG_OPTIONS, CONFIG_DEFAULTS
-from .strings import STRING_ERROR_FILEEXISTS, \
-    STRING_MESSAGE_WROTE, \
-    STRING_ERROR_NOTWROTE, \
-    STRING_CONFIGED
-
 # import the correct version of ConfigParser:
 from sys import version_info
+
+from .defaults import CONFIG_DEFAULTS, CONFIG_OPTIONS
+from .strings import (STRING_CONFIGED, STRING_ERROR_FILEEXISTS,
+                      STRING_ERROR_NOTWROTE, STRING_MESSAGE_WROTE)
+
 if version_info.major == 3 and version_info.minor < 2:  # pre version 3.2
     from configparser import SafeConfigParser
 else:  # up to date version
     from configparser import ConfigParser as SafeConfigParser
+
 import os.path
 
 

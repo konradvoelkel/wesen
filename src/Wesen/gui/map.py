@@ -1,17 +1,19 @@
 """Contains the Map, a visualization of all object's positions."""
 
 import OpenGL
+
 OpenGL.ERROR_ON_COPY = True
-from OpenGL.GL import GL_VERTEX_ARRAY, GL_COLOR_ARRAY, GL_TRIANGLES, \
-    GL_DYNAMIC_DRAW, GL_ARRAY_BUFFER, GL_FLOAT, \
-    glScale, glTranslatef, \
-    glEnableClientState, glDisableClientState, \
-    glVertexPointer, glColorPointer, glDrawArrays
-from .object import GuiObject
-from OpenGL.arrays import vbo
+from math import ceil, log
+
 from numpy import array as narray
 from numpy import zeros as nzeros
-from math import ceil, log
+from OpenGL.arrays import vbo
+from OpenGL.GL import (GL_ARRAY_BUFFER, GL_COLOR_ARRAY, GL_DYNAMIC_DRAW,
+                       GL_FLOAT, GL_TRIANGLES, GL_VERTEX_ARRAY, glColorPointer,
+                       glDisableClientState, glDrawArrays, glEnableClientState,
+                       glScale, glTranslatef, glVertexPointer)
+
+from .object import GuiObject
 
 
 class Map(GuiObject):

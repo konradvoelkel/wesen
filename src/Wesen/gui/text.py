@@ -1,9 +1,9 @@
 """This module contains all methods related to displaying text in the gui,
 such as the Text GuiObject subclass and the TextPrinter class"""
 
-from OpenGL.GL import glPushMatrix, glPopMatrix, \
-    glTranslatef, glRasterPos
-from OpenGL.GLUT import glutBitmapCharacter, GLUT_BITMAP_8_BY_13
+from OpenGL.GL import glPopMatrix, glPushMatrix, glRasterPos, glTranslatef
+from OpenGL.GLUT import GLUT_BITMAP_8_BY_13, glutBitmapCharacter
+
 from .object import GuiObject
 
 

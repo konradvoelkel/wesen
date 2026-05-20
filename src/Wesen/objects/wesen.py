@@ -1,7 +1,8 @@
 """The class for all data and operations a single Wesen has"""
 
-from .base import WorldObject
 import importlib
+
+from .base import WorldObject
 
 
 class RuleException(Exception):

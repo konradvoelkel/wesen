@@ -1,8 +1,9 @@
-from . import helper
+from functools import reduce
+from math import atan2, cos, pi, sin
+
 from ...defaultwesensource import DefaultWesenSource
 from ...point import *
-from math import cos, sin, pi, atan2
-from functools import reduce
+from . import helper
 
 
 class WesenSource(DefaultWesenSource):

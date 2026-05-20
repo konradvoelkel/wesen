@@ -1,10 +1,10 @@
 """The world in which Wesen takes place"""
 
-from .defaults import DEFAULT_GAME_STATE_FILE
-from .objects.wesen import Wesen, RuleException
-from .objects.food import Food
-
 import json
+
+from .defaults import DEFAULT_GAME_STATE_FILE
+from .objects.food import Food
+from .objects.wesen import RuleException, Wesen
 
 
 class World:

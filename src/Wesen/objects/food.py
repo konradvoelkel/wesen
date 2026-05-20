@@ -1,8 +1,9 @@
 """The Food class, which is present in every simulation."""
 
-from .base import WorldObject
-from ..point import getRandomPositionInRadius
 from numpy.random import uniform
+
+from ..point import getRandomPositionInRadius
+from .base import WorldObject
 
 
 class Food(WorldObject):

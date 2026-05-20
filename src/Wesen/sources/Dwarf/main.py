@@ -1,6 +1,7 @@
-from . import helper
-from ...defaultwesensource import DefaultWesenSource
 from numpy.random import randint, uniform
+
+from ...defaultwesensource import DefaultWesenSource
+from . import helper
 
 
 class WesenSource(DefaultWesenSource):

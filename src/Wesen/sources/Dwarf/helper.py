@@ -1,4 +1,5 @@
 from numpy.random import randint, uniform
+
 from ...point import getDistInMaxMetric
 
 # TODO try to extract a sensible helper.py and move some of this back to the main source...

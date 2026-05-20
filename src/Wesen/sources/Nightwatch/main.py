@@ -1,5 +1,5 @@
-from . import helper
 from ...defaultwesensource import DefaultWesenSource
+from . import helper
 
 
 class WesenSource(DefaultWesenSource):
