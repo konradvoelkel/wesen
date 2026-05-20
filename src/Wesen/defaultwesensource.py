@@ -29,11 +29,9 @@ class DefaultWesenSource:
     def restore(self, obj):
         """given a dict obj as returned by persist,
         to restore internal state of AI"""
-        pass
 
     def Receive(self, message):
         """message should be a dict"""
-        pass
 
     def main(self):
         """called every turn"""

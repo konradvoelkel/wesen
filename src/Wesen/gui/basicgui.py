@@ -185,7 +185,6 @@ class BasicGUI:
           self.menu = glutCreateMenu(self.HandleAction)
           glutAttachMenu(GLUT_RIGHT_BUTTON)
         """
-        pass
 
     def _getKeyRepresentation(self, key):
         """takes a character and returns a nice string representation, like

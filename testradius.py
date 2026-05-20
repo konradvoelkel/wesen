@@ -45,8 +45,8 @@ from numpy.random import randint
 
 
 def explicit_abs_0(p, q, radius):
-    (x, y) = q
-    (a, b) = p
+    x, y = q
+    a, b = p
     return (
         ((a < x) and (x - a <= radius))
         or ((a > x) and (a - x <= radius))
@@ -59,7 +59,7 @@ def explicit_abs_0(p, q, radius):
 
 
 def explicit_abs_1(p, q, radius):
-    (x, y) = q
+    x, y = q
     return (
         ((p[0] < x) and (x - p[0] <= radius))
         or ((p[0] > x) and (p[0] - x <= radius))
@@ -84,8 +84,8 @@ def explicit_abs_2(p, q, radius):
 
 
 def python_abs_0(p, q, radius):
-    (px, py) = p
-    (qx, qy) = q
+    px, py = p
+    qx, qy = q
     return (abs(px - qx) <= radius) and (abs(py - qy) <= radius)
 
 
@@ -163,7 +163,11 @@ def test_sophisticated():
     """make sure the functions we test
     all implement the same computation"""
     values = some_values()
-    values_nparray = (numpyarray(values[0]), numpyarray(values[1]), values[2])
+    values_nparray = (
+        numpyarray(values[0]),
+        numpyarray(values[1]),
+        values[2],
+    )
     result = python_abs(*values)
     for func in TEST_THESE_ARRAY:
         assert result == func(*values)
@@ -174,7 +178,9 @@ def test_sophisticated():
 def test_times():
     number = 200000
     repeat = 10
-    print("testing", repeat, "times", number, "calls of each implementation")
+    print(
+        "testing", repeat, "times", number, "calls of each implementation"
+    )
     setup = (
         "import testradius;"
         + "values=testradius.some_values();"
@@ -190,7 +196,9 @@ def test_times():
     for funcname, values in executionStack.items():
         stmt = "testradius." + funcname + values
         min_time = min(
-            timeit_repeat(stmt=stmt, setup=setup, number=number, repeat=repeat)
+            timeit_repeat(
+                stmt=stmt, setup=setup, number=number, repeat=repeat
+            )
         )
         results.append((funcname, min_time * 1000))
     print("%26s -- time consumption in milliseconds" % ("implementation"))

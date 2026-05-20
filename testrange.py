@@ -65,7 +65,7 @@ from src.Wesen.loader import Loader
 
 
 def getRangeIterator_3_c(objectIterator, position, radius, condition=None):
-    (x, y) = position
+    x, y = position
     return (
         (i, o)
         for (i, o, px, py) in (
@@ -81,19 +81,21 @@ def getRangeIterator_3_c(objectIterator, position, radius, condition=None):
 
 
 def getRangeIterator_3(objectIterator, position, radius, condition=None):
-    (x, y) = position
+    x, y = position
     return (
         (i, o)
         for (i, o, px, py) in (
             (i, o, p[0], p[1])
-            for (i, o, p) in ((i, o, o.position) for (i, o) in objectIterator)
+            for (i, o, p) in (
+                (i, o, o.position) for (i, o) in objectIterator
+            )
         )
         if (abs(x - px) <= radius and abs(y - py) <= radius)
     )
 
 
 def getRangeIterator_2(objectIterator, position, radius, condition=None):
-    (x, y) = position
+    x, y = position
     return (
         (i, o)
         for (i, o, p) in ((i, o, o.position) for (i, o) in objectIterator)
@@ -102,7 +104,7 @@ def getRangeIterator_2(objectIterator, position, radius, condition=None):
 
 
 def getRangeIterator_1(objectIterator, position, radius, condition=None):
-    (x, y) = position
+    x, y = position
     return (
         (i, o)
         for (i, o) in objectIterator
@@ -114,7 +116,7 @@ def getRangeIterator_1(objectIterator, position, radius, condition=None):
 
 
 def getRangeIterator_1_c(objectIterator, position, radius, condition=None):
-    (x, y) = position
+    x, y = position
     return (
         (i, o)
         for (i, o) in objectIterator
@@ -126,8 +128,10 @@ def getRangeIterator_1_c(objectIterator, position, radius, condition=None):
     )
 
 
-def getRangeIterator_1_c_force(objectIterator, position, radius, condition):
-    (x, y) = position
+def getRangeIterator_1_c_force(
+    objectIterator, position, radius, condition
+):
+    x, y = position
     return (
         (i, o)
         for (i, o) in objectIterator
@@ -143,7 +147,7 @@ def getRangeIterator_1_c_force_strongly(
     objectIterator, position, radius, condition
 ):
     # XXX does not work with condition=None!
-    (x, y) = position
+    x, y = position
     return (
         (i, o)
         for (i, o) in objectIterator
@@ -155,8 +159,10 @@ def getRangeIterator_1_c_force_strongly(
     )
 
 
-def getRangeIterator_1_c_last(objectIterator, position, radius, condition=None):
-    (x, y) = position
+def getRangeIterator_1_c_last(
+    objectIterator, position, radius, condition=None
+):
+    x, y = position
     return (
         (i, o)
         for (i, o) in objectIterator
@@ -226,7 +232,7 @@ def some_position(worldlength):
 def test_sophisticated():
     """make sure the functions we test
     all implement the same computation"""
-    (worldobjects, worldlength) = initWorld()
+    worldobjects, worldlength = initWorld()
     values = (worldobjects, some_position(worldlength), TEST_RADIUS)
     result = list(getRangeIterator_3_c(*values))
     for condition in [None, lambda x: True]:
@@ -237,7 +243,9 @@ def test_sophisticated():
 def test_times_generic(setup):
     number = TEST_NUMBER
     repeat = TEST_REPEAT
-    print("testing", repeat, "times", number, "calls of each implementation")
+    print(
+        "testing", repeat, "times", number, "calls of each implementation"
+    )
     executionStack = {}
     results = []
     for func in TEST_THESE:
@@ -245,7 +253,9 @@ def test_times_generic(setup):
     for funcname, values in executionStack.items():
         stmt = "list(testrange." + funcname + values + ")"
         min_time = min(
-            timeit_repeat(stmt=stmt, setup=setup, number=number, repeat=repeat)
+            timeit_repeat(
+                stmt=stmt, setup=setup, number=number, repeat=repeat
+            )
         )
         results.append((funcname, min_time * 1000))
     print("%40s -- time consumption in milliseconds" % ("implementation"))

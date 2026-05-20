@@ -32,10 +32,8 @@ class WesenSource(DefaultWesenSource):
         message should be a dictionary,
         but there is no unified protocol.
         """
-        pass
 
     def main(self):
         """A.I. code here, this method is run every turn.
         Please try to write code with low runtime complexity.
         """
-        pass

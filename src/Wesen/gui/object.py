@@ -64,4 +64,3 @@ class GuiObject:
 
     def Reshape(self, x, y):
         """Each GuiObject can handle reshaping events."""
-        pass
