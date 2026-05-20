@@ -4,13 +4,12 @@ from ..point import getRandomPosition
 
 
 class WorldObject:
-
     """this class is an abstraction to all world objects,
     as Wesen, Food and maybe some day something else.
     """
 
     def __init__(self, infoAllObject):
-        #self.infoAllObject = infoAllObject;
+        # self.infoAllObject = infoAllObject;
         self.infoWorld = infoAllObject["world"]
         self.infoObject = infoAllObject["object"]
         self.infoRange = infoAllObject["range"]
@@ -25,12 +24,16 @@ class WorldObject:
         self.time = 0
         self.source = ""
         self.dead = False
-        self.position = self.infoObject.get("position",
-                                            getRandomPosition(self.infoWorld["length"]))
+        self.position = self.infoObject.get(
+            "position", getRandomPosition(self.infoWorld["length"])
+        )
 
     def __repr__(self):
-        return ("<worldobject id=%s pos=%s energy=%s>" %
-                (id(self), self.position, self.energy))
+        return "<worldobject id=%s pos=%s energy=%s>" % (
+            id(self),
+            self.position,
+            self.energy,
+        )
 
     def getRangeIterator(self, radius, condition):
         """returns an iterator of pairs (id, object)
@@ -50,12 +53,14 @@ class WorldObject:
         # +1 since upper bound of range is exclusive
         minY = max(0, y - radius)
         maxY = min(self.infoWorld["length"], y + radius + 1)
-        #print(minX, maxX, maxY, maxY, self.infoWorld["length"]);
-        return ((i, o)
-                for x1 in range(minX, maxX)
-                for y1 in range(minY, maxY)
-                for (i, o) in self.map[x1][y1].items()
-                if (condition is None or condition(o)))
+        # print(minX, maxX, maxY, maxY, self.infoWorld["length"]);
+        return (
+            (i, o)
+            for x1 in range(minX, maxX)
+            for y1 in range(minY, maxY)
+            for (i, o) in self.map[x1][y1].items()
+            if (condition is None or condition(o))
+        )
 
     def Die(self):
         """deletes WorldObject instance from world."""
@@ -66,21 +71,25 @@ class WorldObject:
         """return descriptive data for the gui,
         included by the world in World.getDescriptor.
         """
-        return {"position": self.position,
-                "id": id(self),
-                "energy": self.energy,
-                "age": self.age,
-                "type": self.objectType}
+        return {
+            "position": self.position,
+            "id": id(self),
+            "energy": self.energy,
+            "age": self.age,
+            "type": self.objectType,
+        }
 
     def persist(self):
         """returns JSON serializable object with all information
         needed to restore the state of the object"""
-        return {"type": self.objectType,
-                "energy": self.energy,
-                "age": self.age,
-                "position": self.position,
-                "source": self.source,
-                "time": self.time}
+        return {
+            "type": self.objectType,
+            "energy": self.energy,
+            "age": self.age,
+            "position": self.position,
+            "source": self.source,
+            "time": self.time,
+        }
 
     def restore(self, obj):
         """restores state of this objects from obj"""
@@ -99,8 +108,8 @@ class WorldObject:
 
     def main(self):
         """run one turn of object code"""
-        if(not self.dead):
+        if not self.dead:
             self._EnergyCheck()
-        if(not self.dead):
+        if not self.dead:
             self.age += 1
             self._AgeCheck()

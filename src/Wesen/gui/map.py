@@ -8,27 +8,38 @@ from math import ceil, log
 from numpy import array as narray
 from numpy import zeros as nzeros
 from OpenGL.arrays import vbo
-from OpenGL.GL import (GL_ARRAY_BUFFER, GL_COLOR_ARRAY, GL_DYNAMIC_DRAW,
-                       GL_FLOAT, GL_TRIANGLES, GL_VERTEX_ARRAY, glColorPointer,
-                       glDisableClientState, glDrawArrays, glEnableClientState,
-                       glScale, glTranslatef, glVertexPointer)
+from OpenGL.GL import (
+    GL_ARRAY_BUFFER,
+    GL_COLOR_ARRAY,
+    GL_DYNAMIC_DRAW,
+    GL_FLOAT,
+    GL_TRIANGLES,
+    GL_VERTEX_ARRAY,
+    glColorPointer,
+    glDisableClientState,
+    glDrawArrays,
+    glEnableClientState,
+    glScale,
+    glTranslatef,
+    glVertexPointer,
+)
 
 from .object import GuiObject
 
 
 class Map(GuiObject):
-
     """A Map() object plots the descriptor data onto a 2d-grid."""
 
     def __init__(self, gui, infoWorld, sourceList, colorList):
         GuiObject.__init__(self, gui)
         self.worldLength = infoWorld["length"]
-        self.colorDescriptor = {wesenSource: color
-                                for (wesenSource, color)
-                                in zip(sourceList, colorList)}
+        self.colorDescriptor = {
+            wesenSource: color
+            for (wesenSource, color) in zip(sourceList, colorList)
+        }
         self._indices = {}
         self._data = None
-        self._vbo = None # VBO = vertex buffer object
+        self._vbo = None  # VBO = vertex buffer object
         self._empty_indices = []
         self._max_index = -1
         self._data_size = -1
@@ -39,20 +50,50 @@ class Map(GuiObject):
 
     def __descToArray(self, desc):
         """returns list that contains the vertex and color data for one object"""
-        color = (self.colorDescriptor[desc["source"]]  # color
-                 if desc["type"] == "wesen"
-                 else [0.0, 1.0, 0.0])
-        return ([desc["position"][0], desc["position"][1], color[0], color[1], color[2], 1.0,  # first triangle
-                 desc["position"][0], desc["position"][
-                     1] - 1.0, color[0], color[1], color[2], 1.0,
-                 desc["position"][
-                     0] + 1.0, desc["position"][1], color[0], color[1], color[2], 1.0,
-                 # second triangle
-                 desc["position"][
-                     0] + 1.0, desc["position"][1], color[0], color[1], color[2], 1.0,
-                 desc["position"][0], desc["position"][
-                     1] - 1.0, color[0], color[1], color[2], 1.0,
-                 desc["position"][0] + 1.0, desc["position"][1] - 1.0, color[0], color[1], color[2], 1.0])
+        color = (
+            self.colorDescriptor[desc["source"]]  # color
+            if desc["type"] == "wesen"
+            else [0.0, 1.0, 0.0]
+        )
+        return [
+            desc["position"][0],
+            desc["position"][1],
+            color[0],
+            color[1],
+            color[2],
+            1.0,  # first triangle
+            desc["position"][0],
+            desc["position"][1] - 1.0,
+            color[0],
+            color[1],
+            color[2],
+            1.0,
+            desc["position"][0] + 1.0,
+            desc["position"][1],
+            color[0],
+            color[1],
+            color[2],
+            1.0,
+            # second triangle
+            desc["position"][0] + 1.0,
+            desc["position"][1],
+            color[0],
+            color[1],
+            color[2],
+            1.0,
+            desc["position"][0],
+            desc["position"][1] - 1.0,
+            color[0],
+            color[1],
+            color[2],
+            1.0,
+            desc["position"][0] + 1.0,
+            desc["position"][1] - 1.0,
+            color[0],
+            color[1],
+            color[2],
+            1.0,
+        ]
 
     def _BuildData(self, descriptor):
         """Builds data array from scratch and creates VBO object"""
@@ -71,10 +112,12 @@ class Map(GuiObject):
             self._indices[_id] = i
         self._empty_indices = []
         self._max_index = num_objects - 1
-        self._vbo = vbo.VBO(self._data,
-                            usage=GL_DYNAMIC_DRAW,
-                            target=GL_ARRAY_BUFFER,
-                            size=self._data_size * values_per_object * 4)
+        self._vbo = vbo.VBO(
+            self._data,
+            usage=GL_DYNAMIC_DRAW,
+            target=GL_ARRAY_BUFFER,
+            size=self._data_size * values_per_object * 4,
+        )
         self._dirty_objects = {}
 
     def _AddObject(self, _id, obj):
@@ -90,8 +133,9 @@ class Map(GuiObject):
         if index > 0:
             values = self.__descToArray(obj)
             num_values = len(values)
-            self._vbo[
-                index * num_values:(index + 1) * num_values] = narray(values, "f")
+            self._vbo[index * num_values : (index + 1) * num_values] = narray(
+                values, "f"
+            )
             self._indices[_id] = index
         else:
             self._vbo = None
@@ -108,8 +152,9 @@ class Map(GuiObject):
             self._empty_indices.append(index)
         else:
             self._max_index -= 1
-        self._vbo[
-            index * num_values:(index + 1) * num_values] = nzeros(num_values, "f")
+        self._vbo[index * num_values : (index + 1) * num_values] = nzeros(
+            num_values, "f"
+        )
 
     def _UpdateObject(self, _id, obj):
         """Updates an object in the VBO"""
@@ -121,8 +166,9 @@ class Map(GuiObject):
         if index < 0:
             return
         num_values = type(self).__num_values
-        self._vbo[index * num_values:
-                  (index + 1) * num_values] = narray(self.__descToArray(obj), "f")
+        self._vbo[index * num_values : (index + 1) * num_values] = narray(
+            self.__descToArray(obj), "f"
+        )
 
     def _MarkDirty(self, _id, obj):
         """Marks an object in the VBO for updating"""
@@ -145,7 +191,7 @@ class Map(GuiObject):
         # 			 descriptor)),
         # 	      "f");
         if len(descriptor) > 0:
-            #valuesPerObject = len(self.__descToArray(descriptor[0]))
+            # valuesPerObject = len(self.__descToArray(descriptor[0]))
             if self._vbo is None:
                 self._BuildData(descriptor)
             for _id, obj in self._dirty_objects.items():
@@ -174,6 +220,8 @@ class Map(GuiObject):
     def GetCallbacks(self):
         """returns the callbacks used in the world
         to inform the Map GuiObject about changes"""
-        return {"UpdatePos": self._MarkDirty,
-                "DeleteObject": self._DelObject,
-                "AddObject": self._AddObject}
+        return {
+            "UpdatePos": self._MarkDirty,
+            "DeleteObject": self._DelObject,
+            "AddObject": self._AddObject,
+        }

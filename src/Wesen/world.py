@@ -8,7 +8,6 @@ from .objects.wesen import RuleException, Wesen
 
 
 class World:
-
     """A World object contains a single Wesen simulation,
     In the MVC paradigm it is M+C.
     The main() method runs a single simulation turn.
@@ -29,20 +28,30 @@ class World:
         """sets the infoAllWorld and initializes member variables"""
         # copy everything that will be modified
         self.infoAllWorld = infoAllWorld.copy()
-        self.infoAllWorld.update({"wesen": infoAllWorld["wesen"].copy(),
-                                  "world": infoAllWorld["world"].copy(),
-                                  "food": infoAllWorld["food"].copy()})
+        self.infoAllWorld.update(
+            {
+                "wesen": infoAllWorld["wesen"].copy(),
+                "world": infoAllWorld["world"].copy(),
+                "food": infoAllWorld["food"].copy(),
+            }
+        )
         self.objects = {}
         self.turns = infoAllWorld.get("turns", 0)
         self.stats = {}
-        self.map = [[{} for _ in range(infoAllWorld["world"]["length"])]
-                        for _ in range(infoAllWorld["world"]["length"])]
+        self.map = [
+            [{} for _ in range(infoAllWorld["world"]["length"])]
+            for _ in range(infoAllWorld["world"]["length"])
+        ]
         # is initialized depending on sources in initStats()
-        self.infoAllWorld["world"].update({"DeleteObject": self.DeleteObject,
-                                           "AddObject": self.AddObject,
-                                           "UpdatePos": self.UpdatePos,
-                                           "objects": self.objects,
-                                           "map": self.map})
+        self.infoAllWorld["world"].update(
+            {
+                "DeleteObject": self.DeleteObject,
+                "AddObject": self.AddObject,
+                "UpdatePos": self.UpdatePos,
+                "objects": self.objects,
+                "map": self.map,
+            }
+        )
         self.infoAllWorld["food"]["type"] = "food"
         self.infoAllWorld["wesen"]["type"] = "wesen"
         self.infoAllWorld["wesen"]["sources"].sort()
@@ -67,8 +76,10 @@ class World:
 
     def initStats(self):
         """resets self.stats to count and energy 0 for all object-types"""
-        stats = {"food": {"count": 0, "energy": 0},
-                 "global": {"count": 0, "energy": 0}}
+        stats = {
+            "food": {"count": 0, "energy": 0},
+            "global": {"count": 0, "energy": 0},
+        }
         for source in self.infoAllWorld["wesen"]["sources"]:
             stats[source] = {"count": 0, "energy": 0}
         self.stats = stats
@@ -83,23 +94,27 @@ class World:
 
     def AddObject(self, infoObject):
         """adds an object to the world."""
-        infoAllObject = {"world": self.infoAllWorld["world"],
-                         "range": self.infoAllWorld["range"],
-                         "time": self.infoAllWorld["time"],
-                         "food": self.infoAllWorld["food"],
-                         "object": infoObject}
+        infoAllObject = {
+            "world": self.infoAllWorld["world"],
+            "range": self.infoAllWorld["range"],
+            "time": self.infoAllWorld["time"],
+            "food": self.infoAllWorld["food"],
+            "object": infoObject,
+        }
         infoAllObject["world"].update({"objects": self.objects})
-        if(infoObject["type"] == "wesen"):
+        if infoObject["type"] == "wesen":
             newObject = Wesen(infoAllObject)
-        elif(infoObject["type"] == "food"):
+        elif infoObject["type"] == "food":
             newObject = Food(infoAllObject)
         else:
             raise Exception("invalid objectType: " + infoObject["type"])
         self.objects[id(newObject)] = newObject
-        self.map[newObject.position[0]][
-            newObject.position[1]][id(newObject)] = newObject
+        self.map[newObject.position[0]][newObject.position[1]][
+            id(newObject)
+        ] = newObject
         self.callbacks.get("AddObject", lambda _id, obj: None)(
-            id(newObject), newObject.getDescriptor())
+            id(newObject), newObject.getDescriptor()
+        )
         return newObject
 
     def UpdatePos(self, _id, oldPos, obj):
@@ -116,7 +131,7 @@ class World:
     def DumpGameState(self, filename=DEFAULT_GAME_STATE_FILE):
         """writes the whole game state to a given filename (as JSON)"""
         # TODO move this to wesend, where it belongs!
-        with open(filename, 'w') as f:
+        with open(filename, "w") as f:
             jsonDump = self.persistToJSON()
             f.write(jsonDump)
 
@@ -125,13 +140,17 @@ class World:
 
         This object contains all information needed to restore the exact same
         state of the world."""
-        d = {"world": self.infoAllWorld["world"].copy(),  # need to copy, since we are modifying it
-             "wesen": self.infoAllWorld["wesen"],
-             "range": self.infoAllWorld["range"],
-             "time": self.infoAllWorld["time"],
-             "food": self.infoAllWorld["food"],
-             "objects": [o.persist() for o in self.objects.values()],
-             "turns": self.turns}
+        d = {
+            "world": self.infoAllWorld[
+                "world"
+            ].copy(),  # need to copy, since we are modifying it
+            "wesen": self.infoAllWorld["wesen"],
+            "range": self.infoAllWorld["range"],
+            "time": self.infoAllWorld["time"],
+            "food": self.infoAllWorld["food"],
+            "objects": [o.persist() for o in self.objects.values()],
+            "turns": self.turns,
+        }
         d["world"].pop("Debug", None)
         d["world"].pop("map", None)
         d["world"].pop("DeleteObject", None)
@@ -167,10 +186,10 @@ class World:
         # in the following, the self.objects.copy() is inevitable,
         # as the o.main() might modify self.objects.
         for o in self.objects.copy().values():
-            if(o.objectType == "wesen"):
+            if o.objectType == "wesen":
                 stats[o.source]["count"] += 1
                 stats[o.source]["energy"] += o.energy
-                #stillActive = True;
+                # stillActive = True;
             else:
                 stats["food"]["count"] += 1
                 stats["food"]["energy"] += o.energy
@@ -178,8 +197,10 @@ class World:
                 o.main()
             except RuleException:
                 pass  # TODO: make offending source loose
-        stats["global"] = {"count": len(self.objects),
-                           "energy": sum(objectType["energy"]
-                                         for objectType
-                                         in stats.values())}
+        stats["global"] = {
+            "count": len(self.objects),
+            "energy": sum(
+                objectType["energy"] for objectType in stats.values()
+            ),
+        }
         self.stats = stats

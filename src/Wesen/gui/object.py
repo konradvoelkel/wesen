@@ -4,22 +4,25 @@ from OpenGL.GL import glColor3f, glRectf
 
 
 class GuiObject:
-
     """A GuiObject maintains a visual frame around it."""
 
     def __init__(self, gui):
         self.gui = gui
-        self.frame = {"frame": 0.003,  # ???
-                      "color": [0.75, 0.75, 0.75],  # base color
-                      "plastic": 0.5,  # thickness of the frame
-                      "aspect": 1, "x": 0, "y": 0}
+        self.frame = {
+            "frame": 0.003,  # ???
+            "color": [0.75, 0.75, 0.75],  # base color
+            "plastic": 0.5,  # thickness of the frame
+            "aspect": 1,
+            "x": 0,
+            "y": 0,
+        }
 
     def _getFrameData(self):
         """returns a dict with info about the visual frame"""
         # TODO the whole frame mechanism should be beautified.
         frame = self.frame["frame"]
         aspect = self.frame["aspect"]
-        if(aspect < 1):
+        if aspect < 1:
             x = frame / aspect
             y = frame
         else:
@@ -38,8 +41,12 @@ class GuiObject:
     def _drawframe(self):
         """Draw a frame around the GuiObject"""
         framedata = self._getFrameData()
-        color, plastic, x, y = framedata["color"], framedata["plastic"], \
-            framedata["x"], framedata["y"]
+        color, plastic, x, y = (
+            framedata["color"],
+            framedata["plastic"],
+            framedata["x"],
+            framedata["y"],
+        )
         glColor3f(*(c - plastic for c in color))
         glRectf(0.0, 1.0, 1.0, 1.0 - x)
         # top

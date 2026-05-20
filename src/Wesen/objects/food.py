@@ -7,7 +7,6 @@ from .base import WorldObject
 
 
 class Food(WorldObject):
-
     """unlike wesen, who are programmable and capable of intelligence,
     food can only grow every turn and reproduce over distance.
     """
@@ -22,8 +21,12 @@ class Food(WorldObject):
         self.maxage = self.infoObject["maxage"]
 
     def __repr__(self):
-        return ("<food id=%s growrate=%s pos=%s energy=%s>" %
-                (id(self), self.growrate, self.position, self.energy))
+        return "<food id=%s growrate=%s pos=%s energy=%s>" % (
+            id(self),
+            self.growrate,
+            self.position,
+            self.energy,
+        )
 
     def getDescriptor(self):
         """currently doing nothing than returning the WorldObjects getDescriptor."""
@@ -33,11 +36,15 @@ class Food(WorldObject):
         """returns JSON serializable object with all information
         needed to restore the state of the object"""
         d = WorldObject.persist(self)
-        d.update({"seedrate": self.seedrate,
-                  "growrate": self.growrate,
-                  "rangeseed": self.rangeseed,
-                  "maxamount": self.maxamount,
-                  "maxage": self.maxage})
+        d.update(
+            {
+                "seedrate": self.seedrate,
+                "growrate": self.growrate,
+                "rangeseed": self.rangeseed,
+                "maxamount": self.maxamount,
+                "maxage": self.maxage,
+            }
+        )
         return d
 
     def restore(self, obj):
@@ -50,10 +57,9 @@ class Food(WorldObject):
         self.maxage = obj["maxage"]
 
     def getEaten(self):
-        """dies and returns previous energy amount.
-        """
+        """dies and returns previous energy amount."""
         energy = self.energy
-        if(not self.dead):
+        if not self.dead:
             self.Die()
         return energy
 
@@ -65,23 +71,23 @@ class Food(WorldObject):
         """create a new Food instance in seedrange."""
         infoFood = self.infoObject
         infoFood["energy"] = 1
-        infoFood["position"] = getRandomPositionInRadius(self.position,
-                                                         self.rangeseed,
-                                                         self.infoWorld["length"])
+        infoFood["position"] = getRandomPositionInRadius(
+            self.position, self.rangeseed, self.infoWorld["length"]
+        )
         newFood = self.AddObject(infoFood)
         newFood._eatFoodAtSamePlace()
         return newFood
 
     def _AgeCheck(self):
         WorldObject._AgeCheck(self)
-        if(self.age >= self.infoObject["maxage"]):
+        if self.age >= self.infoObject["maxage"]:
             self.Die()
 
     def _EnergyCheck(self):
         WorldObject._EnergyCheck(self)
-        if(self.energy >= self.infoObject["maxamount"]):
+        if self.energy >= self.infoObject["maxamount"]:
             self.energy = self.infoObject["maxamount"]
-        elif(self.energy < 0):
+        elif self.energy < 0:
             self.energy = 0
             # this happens only if one manipulates food via the GUI
             # TODO the GUI should be more careful and this raise an Error.
@@ -89,18 +95,24 @@ class Food(WorldObject):
 
     def _hasTooMuchFoodNearby(self):
         """return True as soon as there is a lot of food nearby."""
-        for i, _ in enumerate(self.getRangeIterator(self.rangeseed,
-                                                    condition=lambda o: o.objectType == "food")):
-            if(i == 10):  # TODO make this number configurable!
+        for i, _ in enumerate(
+            self.getRangeIterator(
+                self.rangeseed, condition=lambda o: o.objectType == "food"
+            )
+        ):
+            if i == 10:  # TODO make this number configurable!
                 return True
         return False
 
     def _eatFoodAtSamePlace(self):
         """looks for Food with same position but different id than self and eats it."""
-        for obj in [obj # implemented with range iterator to enable changing range to 1 or more later
-                    for oid, obj in self.getRangeIterator(0,
-                                                          condition=lambda o: o.objectType == "food")
-                    if oid != id(self)]:
+        for obj in [
+            obj  # implemented with range iterator to enable changing range to 1 or more later
+            for oid, obj in self.getRangeIterator(
+                0, condition=lambda o: o.objectType == "food"
+            )
+            if oid != id(self)
+        ]:
             self.energy += obj.getEaten()
 
     def main(self):
@@ -108,9 +120,9 @@ class Food(WorldObject):
         When too old, die."""
         WorldObject.main(self)
         # handles age and low-energy death
-        if(not self.dead):
-            if(self.age > 10):  # TODO numbers should be a config option
-                if(uniform(0, 1) < self.seedrate):
-                    if(not self._hasTooMuchFoodNearby()):
+        if not self.dead:
+            if self.age > 10:  # TODO numbers should be a config option
+                if uniform(0, 1) < self.seedrate:
+                    if not self._hasTooMuchFoodNearby():
                         self.Seed()
             self.Grow()

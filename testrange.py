@@ -67,77 +67,107 @@ from timeit import repeat as timeit_repeat
 
 def getRangeIterator_3_c(objectIterator, position, radius, condition=None):
     (x, y) = position
-    return ((i, o)
-            for (i, o, px, py) in ((i, o, p[0], p[1])
-                                   for (i, o, p) in ((i, o, o.position)
-                                                     for (i, o) in objectIterator
-                                                     if (condition is None or condition(o))))
-            if(abs(x - px) <= radius and
-               abs(y - py) <= radius))
+    return (
+        (i, o)
+        for (i, o, px, py) in (
+            (i, o, p[0], p[1])
+            for (i, o, p) in (
+                (i, o, o.position)
+                for (i, o) in objectIterator
+                if (condition is None or condition(o))
+            )
+        )
+        if (abs(x - px) <= radius and abs(y - py) <= radius)
+    )
 
 
 def getRangeIterator_3(objectIterator, position, radius, condition=None):
     (x, y) = position
-    return ((i, o)
-            for (i, o, px, py) in ((i, o, p[0], p[1])
-                                   for (i, o, p) in ((i, o, o.position)
-                                                     for (i, o) in objectIterator))
-            if(abs(x - px) <= radius and
-               abs(y - py) <= radius))
+    return (
+        (i, o)
+        for (i, o, px, py) in (
+            (i, o, p[0], p[1])
+            for (i, o, p) in ((i, o, o.position) for (i, o) in objectIterator)
+        )
+        if (abs(x - px) <= radius and abs(y - py) <= radius)
+    )
 
 
 def getRangeIterator_2(objectIterator, position, radius, condition=None):
     (x, y) = position
-    return ((i, o)
-            for (i, o, p) in ((i, o, o.position)
-                              for (i, o) in objectIterator)
-            if(abs(x - p[0]) <= radius and
-               abs(y - p[1]) <= radius))
+    return (
+        (i, o)
+        for (i, o, p) in ((i, o, o.position) for (i, o) in objectIterator)
+        if (abs(x - p[0]) <= radius and abs(y - p[1]) <= radius)
+    )
 
 
 def getRangeIterator_1(objectIterator, position, radius, condition=None):
     (x, y) = position
-    return ((i, o)
-            for (i, o) in objectIterator
-            if(abs(x - o.position[0]) <= radius and
-               abs(y - o.position[1]) <= radius))
+    return (
+        (i, o)
+        for (i, o) in objectIterator
+        if (
+            abs(x - o.position[0]) <= radius
+            and abs(y - o.position[1]) <= radius
+        )
+    )
 
 
 def getRangeIterator_1_c(objectIterator, position, radius, condition=None):
     (x, y) = position
-    return ((i, o)
-            for (i, o) in objectIterator
-            if(abs(x - o.position[0]) <= radius and
-               abs(y - o.position[1]) <= radius and
-               (condition is None or condition(o))))
+    return (
+        (i, o)
+        for (i, o) in objectIterator
+        if (
+            abs(x - o.position[0]) <= radius
+            and abs(y - o.position[1]) <= radius
+            and (condition is None or condition(o))
+        )
+    )
 
 
 def getRangeIterator_1_c_force(objectIterator, position, radius, condition):
     (x, y) = position
-    return ((i, o)
-            for (i, o) in objectIterator
-            if(abs(x - o.position[0]) <= radius and
-               abs(y - o.position[1]) <= radius and
-               (condition is None or condition(o))))
+    return (
+        (i, o)
+        for (i, o) in objectIterator
+        if (
+            abs(x - o.position[0]) <= radius
+            and abs(y - o.position[1]) <= radius
+            and (condition is None or condition(o))
+        )
+    )
 
 
-def getRangeIterator_1_c_force_strongly(objectIterator, position, radius, condition):
+def getRangeIterator_1_c_force_strongly(
+    objectIterator, position, radius, condition
+):
     # XXX does not work with condition=None!
     (x, y) = position
-    return ((i, o)
-            for (i, o) in objectIterator
-            if(abs(x - o.position[0]) <= radius and
-               abs(y - o.position[1]) <= radius and
-               condition(o)))
+    return (
+        (i, o)
+        for (i, o) in objectIterator
+        if (
+            abs(x - o.position[0]) <= radius
+            and abs(y - o.position[1]) <= radius
+            and condition(o)
+        )
+    )
 
 
 def getRangeIterator_1_c_last(objectIterator, position, radius, condition=None):
     (x, y) = position
-    return ((i, o)
-            for (i, o) in objectIterator
-            if((condition is None or condition(o)) and
-               abs(x - o.position[0]) <= radius and
-               abs(y - o.position[1]) <= radius))
+    return (
+        (i, o)
+        for (i, o) in objectIterator
+        if (
+            (condition is None or condition(o))
+            and abs(x - o.position[0]) <= radius
+            and abs(y - o.position[1]) <= radius
+        )
+    )
+
 
 TEST_THESE = (  # getRangeIterator_3,
     # getRangeIterator_2,
@@ -145,33 +175,40 @@ TEST_THESE = (  # getRangeIterator_3,
     getRangeIterator_3_c,
     getRangeIterator_1_c,
     getRangeIterator_1_c_last,
-    getRangeIterator_1_c_force)
+    getRangeIterator_1_c_force,
+)
 
 TEST_RADIUS = 40
 TEST_NUMBER = 300
 TEST_REPEAT = 40
 
-SETUP = ('import testrange;'
-         + '(worldobjects, worldlength) = testrange.initWorld();'
-         + 'objects = worldobjects;'
-         + 'position = testrange.some_position(worldlength);'
-         + 'radius = testrange.TEST_RADIUS;'
-         + 'values = (objects, position, radius, condition);')
+SETUP = (
+    "import testrange;"
+    + "(worldobjects, worldlength) = testrange.initWorld();"
+    + "objects = worldobjects;"
+    + "position = testrange.some_position(worldlength);"
+    + "radius = testrange.TEST_RADIUS;"
+    + "values = (objects, position, radius, condition);"
+)
 
-SETUP_WITH_CONDITION_NONE = ('condition = None;' + SETUP)
-SETUP_WITH_CONDITION_LAMBDA_TRUE = ('condition = lambda x : True;' + SETUP)
-SETUP_WITH_CONDITION_FOOD = ('condition = lambda o : o.objectType == "food";'
-                             + SETUP)  # matches many objects
-SETUP_WITH_CONDITION_WESEN = ('condition = lambda o : o.objectType == "wesen";'
-                              + SETUP)  # matches few objects
-SETUP_WITH_CONDITION_AGE = ('condition = lambda o : o.age >= 10;'
-                            + SETUP)  # matches no objects
+SETUP_WITH_CONDITION_NONE = "condition = None;" + SETUP
+SETUP_WITH_CONDITION_LAMBDA_TRUE = "condition = lambda x : True;" + SETUP
+SETUP_WITH_CONDITION_FOOD = (
+    'condition = lambda o : o.objectType == "food";' + SETUP
+)  # matches many objects
+SETUP_WITH_CONDITION_WESEN = (
+    'condition = lambda o : o.objectType == "wesen";' + SETUP
+)  # matches few objects
+SETUP_WITH_CONDITION_AGE = (
+    "condition = lambda o : o.age >= 10;" + SETUP
+)  # matches no objects
 
 SETUPS_WITH_CONDITIONS = {  # "None":SETUP_WITH_CONDITION_NONE,
     "Lambda_True": SETUP_WITH_CONDITION_LAMBDA_TRUE,
     "Food": SETUP_WITH_CONDITION_FOOD,
     "Wesen": SETUP_WITH_CONDITION_WESEN,
-    "Aged": SETUP_WITH_CONDITION_AGE}
+    "Aged": SETUP_WITH_CONDITION_AGE,
+}
 
 
 def initWorld():
@@ -205,12 +242,12 @@ def test_times_generic(setup):
     executionStack = {}
     results = []
     for func in TEST_THESE:
-        executionStack[func.__name__]\
-            = '(*values)'
+        executionStack[func.__name__] = "(*values)"
     for funcname, values in executionStack.items():
-        stmt = 'list(testrange.' + funcname + values + ')'
+        stmt = "list(testrange." + funcname + values + ")"
         min_time = min(
-            timeit_repeat(stmt=stmt, setup=setup, number=number, repeat=repeat))
+            timeit_repeat(stmt=stmt, setup=setup, number=number, repeat=repeat)
+        )
         results.append((funcname, min_time * 1000))
     print("%40s -- time consumption in milliseconds" % ("implementation"))
     for result in sorted(results, key=lambda r: r[1]):
@@ -222,7 +259,8 @@ def test_times():
         print("testing with condition", title)
         test_times_generic(setup)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     argv.append("--disablegui")
     for _ in range(10):
         test_sophisticated()

@@ -2,7 +2,6 @@
 
 
 class DefaultWesenSource:
-
     """each AI code should subclass this class."""
 
     def __init__(self, infoAllSource):
@@ -38,4 +37,6 @@ class DefaultWesenSource:
 
     def main(self):
         """called every turn"""
-        raise NotImplementedError("Every Wesen Source (AI code) needs a main method")
+        raise NotImplementedError(
+            "Every Wesen Source (AI code) needs a main method"
+        )

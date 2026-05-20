@@ -11,8 +11,10 @@ def persistence(func, static, dynamic):
             static[entry] = lambda that: that.__getattribute__(entry)
     for entry in dynamic.keys():
         if dynamic[entry] is None:
-            dynamic[entry] = (lambda that: that.__getattribute__(entry),
-                                            lambda that, v: that.__setattr__(entry, v))
+            dynamic[entry] = (
+                lambda that: that.__getattribute__(entry),
+                lambda that, v: that.__setattr__(entry, v),
+            )
         else:
             __getter, __setter = dynamic[entry]
             getter = __getter or (lambda that: that.__getattribute__(entry))
@@ -31,4 +33,5 @@ def persistence(func, static, dynamic):
         else:  # getter case
             for entry, (_, f) in dynamic.items():
                 f(this, obj[entry])
+
     return wrapper

@@ -9,8 +9,12 @@ See also:
 from sys import version_info
 
 from .defaults import CONFIG_DEFAULTS, CONFIG_OPTIONS
-from .strings import (STRING_CONFIGED, STRING_ERROR_FILEEXISTS,
-                      STRING_ERROR_NOTWROTE, STRING_MESSAGE_WROTE)
+from .strings import (
+    STRING_CONFIGED,
+    STRING_ERROR_FILEEXISTS,
+    STRING_ERROR_NOTWROTE,
+    STRING_MESSAGE_WROTE,
+)
 
 if version_info.major == 3 and version_info.minor < 2:  # pre version 3.2
     from configparser import SafeConfigParser
@@ -21,7 +25,6 @@ import os.path
 
 
 class ConfigEd:
-
     """ConfigEd(filename) creates a full powered config editor for wesen"""
 
     def __init__(self, filename):
@@ -43,18 +46,18 @@ class ConfigEd:
         if a section, option or value is not found,
         the default values will be returned.
         """
-        if(os.path.exists(self.configfile)):
+        if os.path.exists(self.configfile):
             self.configParser.read(self.configfile)
             result = {}
             for entry in CONFIG_OPTIONS:
                 (section, options) = entry
                 result[section] = {}
-                if(self.configParser.has_section(section)):
+                if self.configParser.has_section(section):
                     for option in options:
                         (key, entryType) = option
-                        result[section][key] = \
-                            self.getEntryFromConfigParser(
-                                section, key, entryType)
+                        result[section][key] = self.getEntryFromConfigParser(
+                            section, key, entryType
+                        )
             return result
         else:
             self.writeDefaults()
@@ -64,15 +67,15 @@ class ConfigEd:
         """depending on entryType,
         calls the appropriate getter from self.configParser"""
         value = None
-        if(entryType == str):
+        if entryType == str:
             value = self.configParser.get(section, key)
-        elif(entryType == int):
+        elif entryType == int:
             value = self.configParser.getint(section, key)
-        elif(entryType == bool):
+        elif entryType == bool:
             value = self.configParser.getboolean(section, key)
-        elif(entryType == float):
+        elif entryType == float:
             value = self.configParser.getfloat(section, key)
-        if(value is None):
+        if value is None:
             value = CONFIG_DEFAULTS[section][key]
         return value
 
@@ -88,19 +91,19 @@ class ConfigEd:
         always showing the default values and sometimes a comment,
         making it easier to understand the configfile for newbies.
         """
-        if(self.alwaysDefaults):
+        if self.alwaysDefaults:
             write = True
-        elif(os.path.exists(self.configfile)):
-            write = (input(STRING_ERROR_FILEEXISTS % self.configfile) == "y")
+        elif os.path.exists(self.configfile):
+            write = input(STRING_ERROR_FILEEXISTS % self.configfile) == "y"
         else:
             write = True
-        if(write):
+        if write:
             self.configParser.read(self.configfile)
             for entry in CONFIG_OPTIONS:
                 (section, options) = entry
-                if(not self.configParser.has_section(section)):
+                if not self.configParser.has_section(section):
                     self.configParser.add_section(section)
-                if(not self.alwaysDefaults):
+                if not self.alwaysDefaults:
                     print("[%s]" % (section))
                 for option in options:
                     key = option[0]
@@ -115,24 +118,27 @@ class ConfigEd:
         and default value from .defaults"""
         # TODO why upper? we should have lower-case here.
         explanationString = STRING_CONFIGED[section.upper()][key.upper()]
-        self.configParser.set(section, key,
-                              str(self.def_input(CONFIG_DEFAULTS[section][key],
-                                                 explanationString)))
+        self.configParser.set(
+            section,
+            key,
+            str(
+                self.def_input(CONFIG_DEFAULTS[section][key], explanationString)
+            ),
+        )
 
     def def_input(self, default, msg):
         """derived from raw_input,
         def_input(default,prompt) returns a user input or,
         if blank, the specified default.
         """
-        if(not self.alwaysDefaults):
+        if not self.alwaysDefaults:
             try:
-                result = input("# default: %s\t%s" %
-                               (default, msg))
+                result = input("# default: %s\t%s" % (default, msg))
             except EOFError:
                 self.alwaysDefaults = True
                 return default
             print("")
-            if(not result):
+            if not result:
                 return default
             else:
                 return result

@@ -5,11 +5,22 @@ _SensorData plots a single curve."""
 
 from numpy import array as narray
 from OpenGL.arrays import vbo
-from OpenGL.GL import (GL_ARRAY_BUFFER, GL_FLOAT, GL_LINE_STRIP,
-                       GL_STREAM_DRAW, GL_VERTEX_ARRAY, glColor3f,
-                       glDisableClientState, glDrawArrays, glEnableClientState,
-                       glPopMatrix, glPushMatrix, glScalef, glTranslatef,
-                       glVertexPointer)
+from OpenGL.GL import (
+    GL_ARRAY_BUFFER,
+    GL_FLOAT,
+    GL_LINE_STRIP,
+    GL_STREAM_DRAW,
+    GL_VERTEX_ARRAY,
+    glColor3f,
+    glDisableClientState,
+    glDrawArrays,
+    glEnableClientState,
+    glPopMatrix,
+    glPushMatrix,
+    glScalef,
+    glTranslatef,
+    glVertexPointer,
+)
 
 from .object import GuiObject
 from .text import TextPrinter
@@ -18,7 +29,6 @@ SENSORFCT_FROMSTATS_ENERGY = lambda world: lambda x: world.stats[x]["energy"]
 
 
 class Graph(GuiObject):
-
     """A Graph object plots curves for sensors.
     See AddSensor().
     Currently, there are some default sensors."""
@@ -39,22 +49,34 @@ class Graph(GuiObject):
 
     def _AddDefaultSensors(self):
         """adds sensors: (global energy, food energy)"""
-        self.AddSensor({"f": SENSORFCT_FROMSTATS_ENERGY,
-                        "statskey": "global",
-                        "color": [0.5, 0.5, 0.5],
-                        "name": "global energy"})
-        self.AddSensor({"f": SENSORFCT_FROMSTATS_ENERGY,
-                        "statskey": "food",
-                        "color": [0.0, 1.0, 0.0],
-                        "name": "food energy"})
+        self.AddSensor(
+            {
+                "f": SENSORFCT_FROMSTATS_ENERGY,
+                "statskey": "global",
+                "color": [0.5, 0.5, 0.5],
+                "name": "global energy",
+            }
+        )
+        self.AddSensor(
+            {
+                "f": SENSORFCT_FROMSTATS_ENERGY,
+                "statskey": "food",
+                "color": [0.0, 1.0, 0.0],
+                "name": "food energy",
+            }
+        )
 
     def _AddObjectEnergySensors(self, sourceList, colorList):
         """adds a sensor for each source's energy."""
-        for (wesenSource, color) in zip(sourceList, colorList):
-            self.AddSensor({"f": SENSORFCT_FROMSTATS_ENERGY,
-                            "color": color,
-                            "statskey": wesenSource,
-                            "name": wesenSource + " energy"})
+        for wesenSource, color in zip(sourceList, colorList):
+            self.AddSensor(
+                {
+                    "f": SENSORFCT_FROMSTATS_ENERGY,
+                    "color": color,
+                    "statskey": wesenSource,
+                    "name": wesenSource + " energy",
+                }
+            )
 
     def Reshape(self, x, y):
         GuiObject.Reshape(self, x, y)
@@ -73,12 +95,10 @@ class Graph(GuiObject):
     def Step(self):
         """adds current world.stats as data point to all sensors."""
         for sensorInfo, data in zip(self.sensors, self.history):
-            data.AddValue(sensorInfo["f"]
-                          (self.world)
-                          (sensorInfo["statskey"]))
-        self.maxValue = max(self.maxValue,
-                            max(data.maxValue
-                                for data in self.history))
+            data.AddValue(sensorInfo["f"](self.world)(sensorInfo["statskey"]))
+        self.maxValue = max(
+            self.maxValue, max(data.maxValue for data in self.history)
+        )
 
     def DrawPlot(self):
         """Plots the curves for all sensors in self.sensors"""
@@ -112,7 +132,6 @@ class Graph(GuiObject):
 
 
 class _SensorData:
-
     """A _SensorData object holds the data
     for a single sensor, including previous data.
     It can draw itself via Draw()
@@ -124,24 +143,26 @@ class _SensorData:
         for x, y in enumerate(range(size)):
             initialBuffer.append(x)
             initialBuffer.append(y)
-        self.buf = narray(initialBuffer, 'f')
-        self.vbo = vbo.VBO(self.buf,
-                           usage=GL_STREAM_DRAW,
-                           target=GL_ARRAY_BUFFER,
-                           size=4 * 2 * size)
+        self.buf = narray(initialBuffer, "f")
+        self.vbo = vbo.VBO(
+            self.buf,
+            usage=GL_STREAM_DRAW,
+            target=GL_ARRAY_BUFFER,
+            size=4 * 2 * size,
+        )
         self.previous_index = -1
         self.buffer_full = False
         self.maxValue = 0
 
     def AddValue(self, value):
         """supply one more numerical value"""
-        if(self.previous_index == self.size - 1
-           and not(self.buffer_full)):
+        if self.previous_index == self.size - 1 and not (self.buffer_full):
             self.buffer_full = True
         self.previous_index = (self.previous_index + 1) % self.size
         self.buf[self.previous_index * 2 + 1] = value
-        self.vbo[self.previous_index * 2 + 1:
-                 self.previous_index * 2 + 2] = narray([value], 'f')
+        self.vbo[self.previous_index * 2 + 1 : self.previous_index * 2 + 2] = (
+            narray([value], "f")
+        )
         self.maxValue = max(self.maxValue, value)
 
     def Draw(self):
@@ -155,17 +176,17 @@ class _SensorData:
             if self.previous_index != self.size - 1:
                 glPushMatrix()
                 glTranslatef(-1 * (self.previous_index + 1), 0.0, 0.0)
-                glDrawArrays(GL_LINE_STRIP,
-                             (self.previous_index + 1),
-                             (self.size - self.previous_index - 1))
+                glDrawArrays(
+                    GL_LINE_STRIP,
+                    (self.previous_index + 1),
+                    (self.size - self.previous_index - 1),
+                )
                 glPopMatrix()
             glPushMatrix()
             glTranslatef(self.size - self.previous_index - 1, 0.0, 0.0)
-            glDrawArrays(GL_LINE_STRIP, 0,
-                         (self.previous_index + 1))
+            glDrawArrays(GL_LINE_STRIP, 0, (self.previous_index + 1))
             glPopMatrix()
         else:
-            glDrawArrays(GL_LINE_STRIP, 0,
-                         (self.previous_index + 1))
+            glDrawArrays(GL_LINE_STRIP, 0, (self.previous_index + 1))
         glDisableClientState(GL_VERTEX_ARRAY)
         self.vbo.unbind()

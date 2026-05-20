@@ -6,7 +6,7 @@ def DrunkenSailor(self):
 
 
 def recoverAge(self):
-    if(self.age() + 5 > self.infoWesen["maxage"]):
+    if self.age() + 5 > self.infoWesen["maxage"]:
         child = self.Reproduce()
         self.Donate(self.energy(), child)
 
@@ -14,10 +14,10 @@ def recoverAge(self):
 def CatchTarget(self, Action, actionTime):
     result = False
     self.MoveToPosition(self.target["position"])
-    if(self.target["position"] == self.position() and self.time() >= actionTime):
+    if self.target["position"] == self.position() and self.time() >= actionTime:
         result = Action(self, self.target)
-        if(not result):
-            if(not self.target["id"] in self.forbiddenTargets):
+        if not result:
+            if not self.target["id"] in self.forbiddenTargets:
                 self.forbiddenTargets.append(self.target["id"])
         self.target = None
     return result
@@ -42,10 +42,10 @@ def AttackTarget(self):
 def lookForTarget(self, lookRange, objectType, objectCondition, objectFitness):
     matchingObjects = []
     for object in lookRange:
-        if(object["type"] == objectType):
-            if(objectCondition(self, object)):
+        if object["type"] == objectType:
+            if objectCondition(self, object):
                 matchingObjects.append(object)
-    if(matchingObjects):
+    if matchingObjects:
         matchingObjects.sort(key=objectFitness)
         self.target = matchingObjects[0]
         self.targetType = objectType
@@ -55,10 +55,9 @@ def lookForTarget(self, lookRange, objectType, objectCondition, objectFitness):
 
 
 def acceptableFood(self, object):
-    if(object["energy"] >= self.minimumEnergyToEat):
-        if(object["id"] in self.forbiddenTargets):
-            del self.forbiddenTargets[
-                self.forbiddenTargets.index(object["id"])]
+    if object["energy"] >= self.minimumEnergyToEat:
+        if object["id"] in self.forbiddenTargets:
+            del self.forbiddenTargets[self.forbiddenTargets.index(object["id"])]
         return True
     else:
         return False
@@ -69,12 +68,14 @@ def foodFitness(a):
 
 
 def acceptableEnemy(self, object):
-    if(object["source"] != self.source):
-        if(object["energy"] <= (self.energy() + self.minimumEnergyToFight)):
+    if object["source"] != self.source:
+        if object["energy"] <= (self.energy() + self.minimumEnergyToFight):
             return True
         else:
             self.minimumEnergyToFight = int(
-                ((self.energy() + self.minimumEnergyToFight) + object["energy"]) / 2)
+                ((self.energy() + self.minimumEnergyToFight) + object["energy"])
+                / 2
+            )
             return False
     else:
         return False
@@ -85,22 +86,24 @@ def enemyFitness(a):
 
 
 def lookForFoodTarget(self, lookRange=None):
-    if(not lookRange):
+    if not lookRange:
         lookRange = self.closerLook()
     return lookForTarget(self, lookRange, "food", acceptableFood, foodFitness)
 
 
 def lookForEnemyTarget(self, lookRange=None):
-    if(not lookRange):
+    if not lookRange:
         lookRange = self.closerLook()
-    return lookForTarget(self, lookRange, "wesen", acceptableEnemy, enemyFitness)
+    return lookForTarget(
+        self, lookRange, "wesen", acceptableEnemy, enemyFitness
+    )
 
 
 def HandleTarget(self):
-    if(self.target):
-        if(self.targetType == "food"):
+    if self.target:
+        if self.targetType == "food":
             return EatTarget(self)
-        elif(self.targetType == "wesen"):
+        elif self.targetType == "wesen":
             return AttackTarget(self)
         else:
             return False

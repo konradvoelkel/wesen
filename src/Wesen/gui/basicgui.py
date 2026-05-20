@@ -5,17 +5,44 @@ import traceback
 
 # TODO Error checking should be a config option.
 import OpenGL
-from OpenGL.GL import (GL_COLOR_BUFFER_BIT, GL_LINE_SMOOTH, GL_MODELVIEW,
-                       GLError, glClear, glClearColor, glEnable, glFinish,
-                       glLineWidth, glLoadIdentity, glMatrixMode, glPopMatrix,
-                       glPushMatrix, glScale, glTranslatef, glViewport)
-from OpenGL.GLUT import (GLUT_DOUBLE, GLUT_ELAPSED_TIME, GLUT_RGB,
-                         glutCreateWindow, glutDisplayFunc, glutGet,
-                         glutIdleFunc, glutInit, glutInitDisplayMode,
-                         glutInitWindowPosition, glutInitWindowSize,
-                         glutKeyboardFunc, glutMainLoop, glutMouseFunc,
-                         glutPostRedisplay, glutReshapeFunc, glutSpecialFunc,
-                         glutSwapBuffers)
+from OpenGL.GL import (
+    GL_COLOR_BUFFER_BIT,
+    GL_LINE_SMOOTH,
+    GL_MODELVIEW,
+    GLError,
+    glClear,
+    glClearColor,
+    glEnable,
+    glFinish,
+    glLineWidth,
+    glLoadIdentity,
+    glMatrixMode,
+    glPopMatrix,
+    glPushMatrix,
+    glScale,
+    glTranslatef,
+    glViewport,
+)
+from OpenGL.GLUT import (
+    GLUT_DOUBLE,
+    GLUT_ELAPSED_TIME,
+    GLUT_RGB,
+    glutCreateWindow,
+    glutDisplayFunc,
+    glutGet,
+    glutIdleFunc,
+    glutInit,
+    glutInitDisplayMode,
+    glutInitWindowPosition,
+    glutInitWindowSize,
+    glutKeyboardFunc,
+    glutMainLoop,
+    glutMouseFunc,
+    glutPostRedisplay,
+    glutReshapeFunc,
+    glutSpecialFunc,
+    glutSwapBuffers,
+)
 
 from ..strings import VERSIONSTRING
 from .graph import Graph
@@ -25,13 +52,20 @@ from .text import Text
 OpenGL.ERROR_CHECKING = False
 # performance-relevant
 
-#glutArgvDebugging = "--indirect --sync --gldebug";
+# glutArgvDebugging = "--indirect --sync --gldebug";
 
-cl_default = [[1.0, 0.0, 0.0], [0.0, 0.0, 1.0],
-              [1.0, 0.0, 1.0], [1.0, 1.0, 0.0],
-              [0.0, 1.0, 1.0], [0.5, 0.0, 0.0],
-              [0.0, 0.0, 0.5], [0.5, 0.0, 0.5],
-              [0.5, 0.5, 0.0], [0.0, 0.5, 0.5]]
+cl_default = [
+    [1.0, 0.0, 0.0],
+    [0.0, 0.0, 1.0],
+    [1.0, 0.0, 1.0],
+    [1.0, 1.0, 0.0],
+    [0.0, 1.0, 1.0],
+    [0.5, 0.0, 0.0],
+    [0.0, 0.0, 0.5],
+    [0.5, 0.0, 0.5],
+    [0.5, 0.5, 0.0],
+    [0.0, 0.5, 0.5],
+]
 
 
 class BasicGUI:
@@ -40,7 +74,9 @@ class BasicGUI:
     There are three components: Map, Graph and Text.
     """
 
-    def __init__(self, infoGUI, GameLoop, world, extraArgs, colorList=cl_default):
+    def __init__(
+        self, infoGUI, GameLoop, world, extraArgs, colorList=cl_default
+    ):
         """infoGUI should be a dict,
         GameLoop a method,
         world a World object and
@@ -69,21 +105,22 @@ class BasicGUI:
         self.wait = 1
         self.posX, self.posY = (0, 0)
         initxy = self.infoGui["pos"]
-        self.initx = int(initxy[:initxy.index(",")])
-        self.inity = int(initxy[initxy.index(",") + 1:])
+        self.initx = int(initxy[: initxy.index(",")])
+        self.inity = int(initxy[initxy.index(",") + 1 :])
         # TODO maybe repair step feature
         self.descriptor = [{}, []]
         self.bgcolor = [0.0, 0.0, 0.05]
         self.fgcolor = [0.0, 0.1, 0.2]
-        self.colorList = colorList *\
-            int(1 + len(self.infoWesen["sources"]) / len(colorList))
+        self.colorList = colorList * int(
+            1 + len(self.infoWesen["sources"]) / len(colorList)
+        )
         self._initGL(extraArgs)
-        self.graph = Graph(self, self.world,
-                           self.infoWesen["sources"],
-                           self.colorList)
-        self.map = Map(self, self.infoWorld,
-                       self.infoWesen["sources"],
-                       self.colorList)
+        self.graph = Graph(
+            self, self.world, self.infoWesen["sources"], self.colorList
+        )
+        self.map = Map(
+            self, self.infoWorld, self.infoWesen["sources"], self.colorList
+        )
         self.world.setCallbacks(self.map.GetCallbacks())
         self.text = Text(self, self.world)
         self.text.SetAspect(2, 1)
@@ -129,9 +166,9 @@ class BasicGUI:
         """SetSpeed(amount) -> amount is added to the speed, checks if too low  or high"""
         self.wait = 1
         self.speed += amount
-        if(self.speed <= 0):
+        if self.speed <= 0:
             self.speed = 0.01
-        if(self.speed > 1):
+        if self.speed > 1:
             self.speed = 1.0
 
     def SpeedDown(self):
@@ -155,47 +192,61 @@ class BasicGUI:
         >>> self._getKeyRepresentation(27)
         <ESC>
         """
-        specialKeyRepresentation = \
-            lambda key: ("<ESC>" if key == 27 else
-                         "<RETURN>" if key == 13 else
-                         "<LEFT>" if key == 100 else
-                         "<UP>" if key == 101 else
-                         "<RIGHT>" if key == 102 else
-                         "<DOWN>" if key == 103 else
-                         str(key))
-        return (key.decode('ascii')
-                if type(key) is bytes
-                else specialKeyRepresentation(key))
+        specialKeyRepresentation = lambda key: (
+            "<ESC>"
+            if key == 27
+            else "<RETURN>"
+            if key == 13
+            else "<LEFT>"
+            if key == 100
+            else "<UP>"
+            if key == 101
+            else "<RIGHT>"
+            if key == 102
+            else "<DOWN>"
+            if key == 103
+            else str(key)
+        )
+        return (
+            key.decode("ascii")
+            if type(key) is bytes
+            else specialKeyRepresentation(key)
+        )
 
     def _generateKeyExplanations(self):
         """takes current key bindings and generates hints
         using nice string representations and docstrings"""
-        self.keyExplanation = {self._getKeyRepresentation(key):
-                               str(self.keybindings[key].__doc__)
-                               for key in self.keybindings}
+        self.keyExplanation = {
+            self._getKeyRepresentation(key): str(self.keybindings[key].__doc__)
+            for key in self.keybindings
+        }
 
     def initKeyBindings(self):
         """sets up the key bindings for the GUI
         and generates some help texts for the keys
         (self.keyExplanation).
         Could be overridden and called by subclasses."""
-        self.keybindings = {b"q": self.Exit, 27: self.Exit, b"x": self.Exit,
-                            b" ": self.Pause,
-                            b"-": self.SpeedDown,
-                            b"+": self.SpeedUp,
-                            b"s": self.Step,}
+        self.keybindings = {
+            b"q": self.Exit,
+            27: self.Exit,
+            b"x": self.Exit,
+            b" ": self.Pause,
+            b"-": self.SpeedDown,
+            b"+": self.SpeedUp,
+            b"s": self.Step,
+        }
         self._generateKeyExplanations()
 
     def HandleKeys(self, key, x, y):
         """handle both usual (character) and special (ordinal) keys"""
-        #print("key detection: key="+str(key)+" at (x,y)="+str(x)+","+str(y));
-        if(key in self.keybindings):
+        # print("key detection: key="+str(key)+" at (x,y)="+str(x)+","+str(y));
+        if key in self.keybindings:
             self.keybindings[key]()
 
     def _win2glCoord(self, x, y):
         """converts window coordinates to OpenGL coordinates"""
-        posX = (2.0 * x / self.windowSize[0])
-        posY = (2.0 * y / self.windowSize[1])
+        posX = 2.0 * x / self.windowSize[0]
+        posY = 2.0 * y / self.windowSize[1]
         return (posX, posY)
 
     def _win2wesenCoord(self, x, y):
@@ -209,13 +260,13 @@ class BasicGUI:
 
     def HandleMouse(self, button, state, x, y):
         """handles all mouse events as clicks, dragdrops, etc."""
-        if(state == 0):
+        if state == 0:
             self.mouseFirst = [x, y]
             posX, posY = self._win2wesenCoord(x, y)
-            if(posX != self.posX or posY != self.posY):
+            if posX != self.posX or posY != self.posY:
                 self.posX, self.posY = (posX, posY)
             # HINT posX and posY are currently unused but that will change
-        if(state == 1):
+        if state == 1:
             self.mouseLast = [x, y]
 
     def Reshape(self, x, y):
@@ -253,7 +304,7 @@ class BasicGUI:
         actualtime = glutGet(GLUT_ELAPSED_TIME)
         timenow = actualtime - self.lasttime
         turnsnow = self.world.turns - self.lastturns
-        if(timenow > 1000):
+        if timenow > 1000:
             self.fps = self.frame * 1000.0 / timenow
             self.lasttime = actualtime
             self.lastturns = self.world.turns
@@ -262,10 +313,10 @@ class BasicGUI:
 
     def Step(self):
         """Executes one round of the game"""
-        if (not self.pause):
+        if not self.pause:
             return
         self.descriptor = self.GameLoop()
-        self.graph.Step();
+        self.graph.Step()
         try:
             self.RenderScene()
         except GLError as e:
@@ -277,15 +328,15 @@ class BasicGUI:
         """actualizes the descriptor by calling his GameLoop and renders it"""
         # TODO find out if the framedropping mechanism is already killed
         # everywhere
-        if (not self.pause):
-            if (self.wait == int(1.0 / self.speed)):
+        if not self.pause:
+            if self.wait == int(1.0 / self.speed):
                 self.wait = 1
                 self.descriptor = self.GameLoop()
                 self.CalcFps()
                 self.graph.Step()
             else:
                 self.wait += 1
-        if(self.init):
+        if self.init:
             self.Pause()
             self.init = False
         # TODO do the try/catch only in debugging-mode

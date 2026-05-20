@@ -4,7 +4,6 @@ from ...defaultwesensource import DefaultWesenSource
 
 
 class WesenSource(DefaultWesenSource):
-
     def __init__(self, infoAllSource):
         DefaultWesenSource.__init__(self, infoAllSource)
         self.infoAllSource = infoAllSource
@@ -18,9 +17,13 @@ class WesenSource(DefaultWesenSource):
         foods = [o for o in visible if o["type"] == "food"]
 
         if foods:
-            nearest = min(foods, key=lambda f:
-                max(abs(f["position"][0] - self.position()[0]),
-                    abs(f["position"][1] - self.position()[1])))
+            nearest = min(
+                foods,
+                key=lambda f: max(
+                    abs(f["position"][0] - self.position()[0]),
+                    abs(f["position"][1] - self.position()[1]),
+                ),
+            )
             if self.MoveToPosition(nearest["position"]):
                 self.Eat(nearest["id"])
         else:

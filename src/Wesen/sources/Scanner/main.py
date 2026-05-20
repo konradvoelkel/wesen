@@ -6,7 +6,6 @@ from ...defaultwesensource import DefaultWesenSource
 
 
 class WesenSource(DefaultWesenSource):
-
     def __init__(self, infoAllSource):
         """Do all initialization stuff."""
         DefaultWesenSource.__init__(self, infoAllSource)
@@ -18,10 +17,9 @@ class WesenSource(DefaultWesenSource):
 
     def Scanner(self):
         for o in self.look():
-            if(o["type"] == "food"
-               and o["position"] == self.position()):
+            if o["type"] == "food" and o["position"] == self.position():
                 self.Eat(o["id"])
-        if(self.movecount >= self.worldlength):
+        if self.movecount >= self.worldlength:
             self.Move([1, 1])
             self.movecount = 1
         else:
@@ -29,7 +27,7 @@ class WesenSource(DefaultWesenSource):
             self.movecount += 1
 
     def main(self):
-        while(self.time() > self.infoTime["move"]):
-            if(self.energy() >= self.reproductionEnergy):
+        while self.time() > self.infoTime["move"]:
+            if self.energy() >= self.reproductionEnergy:
                 self.Reproduce()
             self.Scanner()

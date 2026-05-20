@@ -15,11 +15,10 @@ from .world import World
 
 
 class Wesend:
-
     """Wesend(config)
-            Runs one Wesen game by start(), with given config data.
-            This module intruments a World object
-            and, if enabled in the config, a Gui object.
+    Runs one Wesen game by start(), with given config data.
+    This module intruments a World object
+    and, if enabled in the config, a Gui object.
     """
 
     def __init__(self, config):
@@ -33,13 +32,14 @@ class Wesend:
         self.infoTime = config["time"]
         self.infoWesen["sources"] = self.infoWesen["sources"].split(",")
         self.infoWorld["Debug"] = self.Debug
-        infoAllWorld = {"world": self.infoWorld,
-                        "wesen": self.infoWesen,
-                        "food": self.infoFood,
-                        "range": self.infoRange,
-                        "time": self.infoTime}
-        if (config.pop("resume", False) and
-                exists(DEFAULT_GAME_STATE_FILE)):
+        infoAllWorld = {
+            "world": self.infoWorld,
+            "wesen": self.infoWesen,
+            "food": self.infoFood,
+            "range": self.infoRange,
+            "time": self.infoTime,
+        }
+        if config.pop("resume", False) and exists(DEFAULT_GAME_STATE_FILE):
             with open(DEFAULT_GAME_STATE_FILE) as f:
                 string = f.read()
                 d = json.loads(string)
@@ -51,19 +51,23 @@ class Wesend:
 
     def start(self, extraArgs=""):
         """starts the simulation (with GUI, if configured)"""
-        if(self.infoGui["enable"]):
+        if self.infoGui["enable"]:
             self.initGUI(extraArgs)
         else:
             self.main()
 
     def initGUI(self, extraArgs):
         """handing over all control to the gui"""
-        GUI = importlib.import_module(".gui."
-                                      + self.infoGui["source"],
-                                      __package__).GUI
-        infoGui = {"wesend": self, "world": self.infoWorld,
-                   "wesen": self.infoWesen, "food": self.infoFood,
-                   "gui": self.infoGui}
+        GUI = importlib.import_module(
+            ".gui." + self.infoGui["source"], __package__
+        ).GUI
+        infoGui = {
+            "wesend": self,
+            "world": self.infoWorld,
+            "wesen": self.infoWesen,
+            "food": self.infoFood,
+            "gui": self.infoGui,
+        }
         GUI(infoGui, self.mainLoop, self.world, extraArgs)
 
     def Debug(self, message):
@@ -80,13 +84,13 @@ class Wesend:
         """calls world.main() in gui-less mode,
         until KeyboardInterrupt
         and prints stats every 1000 turns to show some action"""
-        while(True):
+        while True:
             try:
                 self.world.main()
             except KeyboardInterrupt:
                 print(" got keyboard interrupt, stopping now.")
                 self.world.DumpGameState()
                 break
-            if((self.world.turns % 1000) == 0):
+            if (self.world.turns % 1000) == 0:
                 print("turn", self.world.turns, "stats:")
                 pprint(self.world.stats, indent=3, depth=4, width=80)

@@ -3,7 +3,6 @@ from . import helper
 
 
 class WesenSource(DefaultWesenSource):
-
     def __init__(self, infoAllSource):
         """Do all initialization stuff."""
         DefaultWesenSource.__init__(self, infoAllSource)
@@ -24,16 +23,16 @@ class WesenSource(DefaultWesenSource):
         it looks for food,
         otherwise for enemies.
         If nothing is found, it scans the world."""
-        while(self.time() >= self.infoTime["reproduce"]):
+        while self.time() >= self.infoTime["reproduce"]:
             helper.recoverAge(self)
-            if(self.energy() > self.minimumEnergyToReproduce):
+            if self.energy() > self.minimumEnergyToReproduce:
                 self.Reproduce()
             lookRange = self.closerLook()
-            if(not self.lookFunction(self, lookRange=lookRange)):
+            if not self.lookFunction(self, lookRange=lookRange):
                 helper.ScannerMove(self)
             helper.HandleTarget(self)
-            if(not self.target):
-                if(self.energy() < self.minimumEnergyToFight):
+            if not self.target:
+                if self.energy() < self.minimumEnergyToFight:
                     self.lookFunction = helper.lookForFoodTarget
                 else:
                     self.lookFunction = helper.lookForEnemyTarget

@@ -9,7 +9,6 @@ from Wesen.defaultwesensource import DefaultWesenSource
 
 
 class WesenSource(DefaultWesenSource):
-
     """this is a template to your own wesen sources."""
 
     def __init__(self, infoAllSource):

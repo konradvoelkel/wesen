@@ -12,20 +12,19 @@ def DrunkenSailor(self):
 
 
 def recoverAge(self):
-    if(self.age() + 5 > self.infoWesen["maxage"]):
+    if self.age() + 5 > self.infoWesen["maxage"]:
         child = self.Reproduce()
         self.Donate(self.energy(), child)
 
 
 def CatchTarget(self, Action, actionTime):
     targ = self.target
-    if(self.MoveToPosition(targ["position"])):
-        if(targ["position"] == self.position()
-           and self.time() >= actionTime):
+    if self.MoveToPosition(targ["position"]):
+        if targ["position"] == self.position() and self.time() >= actionTime:
             self.target = None
-            if(Action(self, targ)):
+            if Action(self, targ):
                 return True
-            elif(not targ["id"] in self.forbiddenTargets):
+            elif not targ["id"] in self.forbiddenTargets:
                 self.forbiddenTargets.append(targ["id"])
     return False
 
@@ -48,15 +47,20 @@ def AttackTarget(self):
 
 def lookForTarget(self, lookRange, objectType, objectCondition, objectFitness):
     # TODO now ignores objectFitness, uses positionFitness instead;
-    matchingObjects = [o for o in lookRange
-                       if (o["type"] == objectType and
-                           objectCondition(self, o))]
-    if(matchingObjects):
-        matchingObjects.sort(key=lambda o: getDistInMaxMetric(o["position"],
-                                                              self.position(
-                                                              ),
-                                                              self.infoAllSource["world"]["length"]))
-        #self.target = matchingObjects[randint(len(matchingObjects))];
+    matchingObjects = [
+        o
+        for o in lookRange
+        if (o["type"] == objectType and objectCondition(self, o))
+    ]
+    if matchingObjects:
+        matchingObjects.sort(
+            key=lambda o: getDistInMaxMetric(
+                o["position"],
+                self.position(),
+                self.infoAllSource["world"]["length"],
+            )
+        )
+        # self.target = matchingObjects[randint(len(matchingObjects))];
         self.target = matchingObjects[0]
         self.targetType = objectType
         return True
@@ -67,8 +71,8 @@ def lookForTarget(self, lookRange, objectType, objectCondition, objectFitness):
 
 
 def acceptableFood(self, o):
-    if(o["age"] >= self.minimalGardenAge):
-        if(o["id"] in self.forbiddenTargets):
+    if o["age"] >= self.minimalGardenAge:
+        if o["id"] in self.forbiddenTargets:
             del self.forbiddenTargets[self.forbiddenTargets.index(o["id"])]
         return True
     else:
@@ -80,8 +84,8 @@ def foodFitness(a):
 
 
 def acceptableEnemy(self, o):
-    if(o["source"] != self.source):
-        if(o["energy"] <= (self.energy() + self.minimumEnergyToFight)):
+    if o["source"] != self.source:
+        if o["energy"] <= (self.energy() + self.minimumEnergyToFight):
             return True
         # else:
         # self.minimumEnergyToFight = int(((self.energy() +
@@ -90,7 +94,7 @@ def acceptableEnemy(self, o):
 
 
 def threateningEnemy(self, o):
-    if(o["source"] == self.source):
+    if o["source"] == self.source:
         return False
     else:
         return o["energy"] > self.energy() * 1.2
@@ -102,39 +106,43 @@ def enemyFitness(a):
 
 
 def lookForFoodTarget(self, lookRange=None):
-    if(not lookRange):
+    if not lookRange:
         lookRange = self.closerLook()
     return lookForTarget(self, lookRange, "food", acceptableFood, foodFitness)
 
 
 def lookForEnemyTarget(self, lookRange=None):
-    if(not lookRange):
+    if not lookRange:
         lookRange = self.closerLook()
-    return lookForTarget(self, lookRange, "wesen", acceptableEnemy, enemyFitness)
+    return lookForTarget(
+        self, lookRange, "wesen", acceptableEnemy, enemyFitness
+    )
 
 
 def lookForThreat(self, lookRange=None):
-    if(not lookRange):
+    if not lookRange:
         lookRange = self.closerLook()
-    return lookForTarget(self, lookRange, "wesen", threateningEnemy, enemyFitness)
+    return lookForTarget(
+        self, lookRange, "wesen", threateningEnemy, enemyFitness
+    )
 
 
 def lookAtYoungGarden(self, lookRange=None):
-    if(not lookRange):
+    if not lookRange:
         lookRange = self.closerLook()
     foodCount = 0
     for o in lookRange:
-        if(o["type"] == "food" and o["age"] <= self.minimalGardenAge):
+        if o["type"] == "food" and o["age"] <= self.minimalGardenAge:
             foodCount += 1
-    return (foodCount > 10)
+    return foodCount > 10
     # TODO magic number
 
 
 def HandleTarget(self):
-    if(self.target):
-        if(self.targetType == "food"):
+    if self.target:
+        if self.targetType == "food":
             return EatTarget(self)
-        elif(self.targetType == "wesen"):
+        elif self.targetType == "wesen":
             return AttackTarget(self)
         else:
             return False
@@ -143,14 +151,23 @@ def HandleTarget(self):
 
 
 def ScannerMove(self, scanVector=(1, 0), scanSpeed=3, randomization=0.2):
-    self.Move([int(randomization * uniform(-1, 1) + scanSpeed * coordinate)
-              for coordinate in scanVector])
+    self.Move(
+        [
+            int(randomization * uniform(-1, 1) + scanSpeed * coordinate)
+            for coordinate in scanVector
+        ]
+    )
 
 
 def Flee(self):
     for i in range(0, 5):
-        ScannerMove(self, scanVector=[-1 * (tc - pc)
-                    for (tc, pc) in zip(self.target["position"], self.position())])
+        ScannerMove(
+            self,
+            scanVector=[
+                -1 * (tc - pc)
+                for (tc, pc) in zip(self.target["position"], self.position())
+            ],
+        )
 
 
 def seedOut(self):

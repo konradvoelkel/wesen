@@ -5,7 +5,6 @@ from . import helper
 
 
 class WesenSource(DefaultWesenSource):
-
     globalScanVector = (uniform(-1, 1), uniform(-1, 1))
 
     def __init__(self, infoAllSource):
@@ -27,38 +26,42 @@ class WesenSource(DefaultWesenSource):
 
     def main(self):
         # save age death and reproduce
-        if(self.energy() > self.minimumEnergyToReproduce):
-            if(self.Reproduce()):
+        if self.energy() > self.minimumEnergyToReproduce:
+            if self.Reproduce():
                 for _ in range(10):
-                    helper.ScannerMove(self,
-                                       scanVector=[__class__.globalScanVector[1],
-                                                   -__class__.globalScanVector[0]])
+                    helper.ScannerMove(
+                        self,
+                        scanVector=[
+                            __class__.globalScanVector[1],
+                            -__class__.globalScanVector[0],
+                        ],
+                    )
         helper.recoverAge(self)
         lookRange = self.closerLook()
         # could be done in-loop...
         # action loop
-        while(self.time() > self.minimalTime):
+        while self.time() > self.minimalTime:
             # try to finish something that already started:
-            if(self.targetType == "food"):
+            if self.targetType == "food":
                 helper.lookForFoodTarget(self, lookRange)
-            elif(self.targetType == "wesen"):
+            elif self.targetType == "wesen":
                 helper.lookForEnemyTarget(self, lookRange)
             # TODO the 4 lines above this comment are wrong.
             helper.HandleTarget(self)
             # nothing to do? OK, find something to do.
-            if(not self.target):
+            if not self.target:
                 foundFood = helper.lookForFoodTarget(self, lookRange)
-                if(foundFood):
+                if foundFood:
                     # fine, this will be handled next loop iteration!
                     pass
                 else:
                     foundEnemy = False
-                    if(self.energy() > self.minimumEnergyToFight):
+                    if self.energy() > self.minimumEnergyToFight:
                         foundEnemy = helper.lookForEnemyTarget(self, lookRange)
                         # if found, this will be handled next loop iteration!
-                    if(not foundEnemy):
+                    if not foundEnemy:
                         # nothing to eat, no fights. OK. Time for gardening.
-                        if(helper.lookAtYoungGarden(self, lookRange)):
+                        if helper.lookAtYoungGarden(self, lookRange):
                             # well, wait for the garden to grow!
                             self.target = None
                             # TODO find out whether necessary
@@ -66,14 +69,19 @@ class WesenSource(DefaultWesenSource):
                         else:
                             decision = randint(0, 9)
                             # TODO move magic number to constants above
-                            if(decision == 0):
+                            if decision == 0:
                                 # seed out!
                                 helper.seedOut(self)
-                            elif(decision <= 4):
+                            elif decision <= 4:
                                 # move away!
                                 helper.ScannerMove(
-                                    self, scanVector=__class__.globalScanVector)
+                                    self, scanVector=__class__.globalScanVector
+                                )
                             else:
                                 # move back!
                                 helper.ScannerMove(
-                                    self, scanVector=[-c for c in __class__.globalScanVector])
+                                    self,
+                                    scanVector=[
+                                        -c for c in __class__.globalScanVector
+                                    ],
+                                )

@@ -8,7 +8,6 @@ from .object import GuiObject
 
 
 class Text(GuiObject):
-
     """A Text object displays world.stats"""
 
     def __init__(self, gui, world):
@@ -32,31 +31,30 @@ class Text(GuiObject):
         """Print world.stats"""
         p = self.printer
         statString = "%-20s | %9s | %9s | %14s |\n"
-        p.Print(statString %
-                ("", "energy", "count", "energy/object"))
+        p.Print(statString % ("", "energy", "count", "energy/object"))
         for source in sorted(self.world.stats.keys()):
             energy = self.world.stats[source]["energy"]
             count = self.world.stats[source]["count"]
-            if(count == 0):
+            if count == 0:
                 perWesen = 0
             else:
                 perWesen = energy // count
-            p.Print(statString %
-                    (source, energy, count, perWesen))
+            p.Print(statString % (source, energy, count, perWesen))
 
     def DrawEngineStats(self):
         """Print some information about the game engine,
         such as fps (frames per second), number of turns, etc."""
         p = self.printer
         p.Print("paused" if self.gui.pause else "running")
-        p.Print("\n\n\n%3.1f fps,  %8d turns\n\n" %
-                (self.gui.fps, self.world.turns))
+        p.Print(
+            "\n\n\n%3.1f fps,  %8d turns\n\n" % (self.gui.fps, self.world.turns)
+        )
         # p.Print("manual slowdown: %3d percent" %
-        #	  (int(100.0/self.gui.speed)));
+        # (int(100.0/self.gui.speed)));
 
     def DrawGivenText(self):  # TODO replace this mechanism by something else
         """Draws the last text given previously by Print(line)"""
-        if(self.givenText is not None):
+        if self.givenText is not None:
             self.printer.Print("\n")
             self.printer.Print(self.givenText)
 
@@ -69,7 +67,6 @@ class Text(GuiObject):
 
 
 class TextPrinter:
-
     """A printer that uses OpenGL to draw strings.
     Use ResetRaster() and then Print(text)."""
 
@@ -92,12 +89,13 @@ class TextPrinter:
     def Print(self, text):
         """Print(String text) prints text to the screen"""
         glPushMatrix()
-        glTranslatef(0.02, 0.96, 0.0) # TODO where does the magic number come from?
+        glTranslatef(
+            0.02, 0.96, 0.0
+        )  # TODO where does the magic number come from?
         for character in text:
-            if(character == "\n"):
+            if character == "\n":
                 self.rasterPos -= self.y
                 glRasterPos(0, self.rasterPos)
             else:
-                glutBitmapCharacter(GLUT_BITMAP_8_BY_13,
-                                    ord(character))
+                glutBitmapCharacter(GLUT_BITMAP_8_BY_13, ord(character))
         glPopMatrix()

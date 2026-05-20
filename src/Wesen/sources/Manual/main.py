@@ -10,7 +10,6 @@ from ...defaultwesensource import DefaultWesenSource
 
 
 class WesenSource(DefaultWesenSource):
-
     def __init__(self, infoAllSource):
         DefaultWesenSource.__init__(self, infoAllSource)
         self.exitPattern = re.compile("^(x|q|quit|exit)$")
@@ -23,7 +22,7 @@ class WesenSource(DefaultWesenSource):
         return eval(input("\n> "))
 
     def main(self):
-        while(True):
+        while True:
             try:
                 userInput = self.getInput()
             except EOFError:
@@ -31,14 +30,13 @@ class WesenSource(DefaultWesenSource):
             except KeyboardInterrupt:
                 break
             else:
-                if(self.exitPattern.match(userInput)):
+                if self.exitPattern.match(userInput):
                     sys.exit()
                 else:
                     exec(userInput)
 
 
 class Completer:
-
     def __init__(self, commands):
         self.commands = [command + "()" for command in commands]
 
@@ -51,10 +49,10 @@ class Completer:
 
     def method_matches(self, text):
         matches = []
-        if(len(text) == 0):
+        if len(text) == 0:
             return self.commands
         n = len(text)
         for command in self.commands:
-            if(command[:n] == text):
+            if command[:n] == text:
                 matches.append(command)
         return matches

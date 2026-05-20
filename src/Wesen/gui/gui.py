@@ -9,15 +9,24 @@ as this code only adds features on top:
 
 from OpenGL.GL import GL_RGB, GL_UNSIGNED_BYTE, glReadPixels
 from OpenGL.GLU import GLubyte
-from OpenGL.GLUT import (GLUT_RIGHT_BUTTON, glutAddMenuEntry, glutAttachMenu,
-                         glutCreateMenu)
+from OpenGL.GLUT import (
+    GLUT_RIGHT_BUTTON,
+    glutAddMenuEntry,
+    glutAttachMenu,
+    glutCreateMenu,
+)
 from PIL import Image
 
 from .basicgui import BasicGUI
 
-cl_freak = [[0.4, 0.2, 0.6], [0.6, 0.2, 0.4],
-            [0.8, 0.2, 0.2], [0.2, 0.2, 0.8],
-            [0.7, 0.3, 0.1], [0.1, 0.3, 0.7]]
+cl_freak = [
+    [0.4, 0.2, 0.6],
+    [0.6, 0.2, 0.4],
+    [0.8, 0.2, 0.2],
+    [0.2, 0.2, 0.8],
+    [0.7, 0.3, 0.1],
+    [0.1, 0.3, 0.7],
+]
 
 colorList = cl_freak
 
@@ -35,28 +44,29 @@ class GUI(BasicGUI):
         self.movieMode = False
         # the following starts glutMainLoop:
         BasicGUI.__init__(
-            self, infoGUI, GameLoop, world, extraArgs, colorList=cl_freak)
+            self, infoGUI, GameLoop, world, extraArgs, colorList=cl_freak
+        )
 
     def ModifyFood(self, action):
         """action can be "delete" "add" "increase" "decrease" """
-        if(action == "delete"): # FIXME broken?
+        if action == "delete":  # FIXME broken?
             for o in self.world.objects.values():
-                if(o.objectType == "food"):
-                    if(self.world.DeleteObject(id(o))):
+                if o.objectType == "food":
+                    if self.world.DeleteObject(id(o)):
                         break
-        if(action == "add"): # FIXME broken?
+        if action == "add":  # FIXME broken?
             infoFood = self.infoFood
             infoFood["type"] = "food"
-            if("position" in infoFood):
+            if "position" in infoFood:
                 del infoFood["position"]
             self.world.AddObject(infoFood)
-        if(action == "increase"):
+        if action == "increase":
             for o in self.world.objects.values():
-                if(o.objectType == "food"):
+                if o.objectType == "food":
                     o.energy += 10
-        if(action == "decrease"):
+        if action == "decrease":
             for o in self.world.objects.values():
-                if(o.objectType == "food"):
+                if o.objectType == "food":
                     o.energy -= 10
 
     def initMenu(self):
@@ -68,32 +78,41 @@ class GUI(BasicGUI):
 
     def HandleAction(self, action):
         """handles actions from the popup-menu"""
-        if(action == 55):
-            line = "".join(["'{}' {}\n".format(key, self.keyExplanation[key])
-                            for key in sorted(self.keyExplanation.keys())])
+        if action == 55:
+            line = "".join(
+                [
+                    "'{}' {}\n".format(key, self.keyExplanation[key])
+                    for key in sorted(self.keyExplanation.keys())
+                ]
+            )
             self.text.Print(line)
-        elif(action == 100):
+        elif action == 100:
             self.Pause()
         else:
             raise NotImplementedError(
-                "unknown action from popup-menu (%s)" % (action))
+                "unknown action from popup-menu (%s)" % (action)
+            )
         return 0
 
     def initKeyBindings(self):
         """sets up all key bindings,
         inheriting some from BasicGUI"""
         BasicGUI.initKeyBindings(self)
-        self.keybindings.update({b"m": self.ToggleMovie,
-                                 # now following left,up,right,down keys:
-                                 100: lambda: self.ModifyFood("delete"),
-                                 101: lambda: self.ModifyFood("increase"),
-                                 102: lambda: self.ModifyFood("add"),
-                                 103: lambda: self.ModifyFood("decrease"),
-                                 })
+        self.keybindings.update(
+            {
+                b"m": self.ToggleMovie,
+                # now following left,up,right,down keys:
+                100: lambda: self.ModifyFood("delete"),
+                101: lambda: self.ModifyFood("increase"),
+                102: lambda: self.ModifyFood("add"),
+                103: lambda: self.ModifyFood("decrease"),
+            }
+        )
         self._generateKeyExplanations()
-        self.keyExplanation = {self._getKeyRepresentation(key):
-                               str(self.keybindings[key].__doc__)
-                               for key in self.keybindings}
+        self.keyExplanation = {
+            self._getKeyRepresentation(key): str(self.keybindings[key].__doc__)
+            for key in self.keybindings
+        }
         self.keyExplanation[self._getKeyRepresentation(100)] = "delete food"
         self.keyExplanation[self._getKeyRepresentation(101)] = "increase food"
         self.keyExplanation[self._getKeyRepresentation(102)] = "add food"
@@ -106,19 +125,16 @@ class GUI(BasicGUI):
     def HandleMouse(self, button, state, x, y):
         """handles all mouse events as clicks, dragdrops, etc."""
         BasicGUI.HandleMouse(self, button, state, x, y)
-        if(state == 1):
+        if state == 1:
             image = self.takeScreenshot()
-            image.save('screenshot.png')
+            image.save("screenshot.png")
 
     def takeScreenshot(self):
         """takes a screenshot of the map region"""
         (width, height) = self.windowSize
         buffer = (GLubyte * (3 * width * height))(0)
-        glReadPixels(0, 0, width, height,
-                     GL_RGB, GL_UNSIGNED_BYTE, buffer)
-        image = Image.fromstring(mode="RGB",
-                                 size=(width, height),
-                                 data=buffer)
+        glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, buffer)
+        image = Image.fromstring(mode="RGB", size=(width, height), data=buffer)
         # use image coordinates, not OpenGL coordinates:
         image = image.transpose(Image.FLIP_TOP_BOTTOM)
         # take only the Map part of the screenshot:
@@ -130,5 +146,5 @@ class GUI(BasicGUI):
     def RenderScene(self):
         """draws the actual descriptor"""
         BasicGUI.RenderScene(self)
-        if(self.movieMode):
+        if self.movieMode:
             self.takeScreenshot().save("m%08d.png" % (self.turns))
