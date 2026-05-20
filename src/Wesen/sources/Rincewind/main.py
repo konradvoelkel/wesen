@@ -2,7 +2,7 @@ from functools import reduce
 from math import atan2, cos, pi, sin
 
 from ...defaultwesensource import DefaultWesenSource
-from ...point import *
+from ...point import getDistInMaxMetric, getShortestTranslation
 from . import helper
 
 
