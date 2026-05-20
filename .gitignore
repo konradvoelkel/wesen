@@ -39,3 +39,6 @@ profile.stats_before
 
 # Pylance
 uv.lock
+
+#Mac
+.DS_Store

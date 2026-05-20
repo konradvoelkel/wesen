@@ -64,7 +64,7 @@ CONFIG_DEFAULTS = {"gui":
                    "world":
                    {"length": 500},
                    "wesen":
-                   {"sources": "Rincewind,Nightwatch,Dwarf",
+                   {"sources": "Rincewind,Nightwatch,Dwarf,GreatRabbit",
                     "count": 5,
                     "energy": 300,
                     "maxage": 1000},
