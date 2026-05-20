@@ -212,9 +212,9 @@ class _OverwriteConfigAction(Action):
             #      self.section, "]",
             #      self.dest, "=",
             #      values[0]);
-            if not "_config" in namespace:
+            if "_config" not in namespace:
                 namespace._config = {}
-            if not self.section in namespace._config.keys():
+            if self.section not in namespace._config.keys():
                 namespace._config[self.section] = {}
             namespace._config[self.section][self.dest] = values[0]
 

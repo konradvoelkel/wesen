@@ -17,7 +17,7 @@ def CatchTarget(self, Action, actionTime):
     if self.target["position"] == self.position() and self.time() >= actionTime:
         result = Action(self, self.target)
         if not result:
-            if not self.target["id"] in self.forbiddenTargets:
+            if self.target["id"] not in self.forbiddenTargets:
                 self.forbiddenTargets.append(self.target["id"])
         self.target = None
     return result

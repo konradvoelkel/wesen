@@ -10,13 +10,12 @@ to profile your AI source code.
 
 In some tournaments, there is a penalty for computation cost."""
 
-from src.Wesen.loader import Loader
+import sys
 from cProfile import Profile
-from time import perf_counter
 
 # only in python3.3
 from pstats import Stats
-import sys
+from time import perf_counter
 
 print("You can supply an alternative config file on the command-line")
 print("You should stop Wesen by Ctrl+C to finish profiling")

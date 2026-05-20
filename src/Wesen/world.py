@@ -18,7 +18,7 @@ class World:
     def __init__(self, infoAllWorld=None, createObjects=True, callbacks={}):
         """infoAllWorld is a dictionary of dictionaries"""
         self.callbacks = callbacks
-        if not infoAllWorld is None:
+        if infoAllWorld is not None:
             self.setInfoAllWorld(infoAllWorld)
             if createObjects:
                 self.createDefaultObjects()

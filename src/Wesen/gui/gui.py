@@ -81,7 +81,7 @@ class GUI(BasicGUI):
         if action == 55:
             line = "".join(
                 [
-                    "'{}' {}\n".format(key, self.keyExplanation[key])
+                    f"'{key}' {self.keyExplanation[key]}\n"
                     for key in sorted(self.keyExplanation.keys())
                 ]
             )

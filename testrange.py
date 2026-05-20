@@ -56,13 +56,12 @@ and the _1_c_force variant arguably has clearest code,
 which makes it our choice.
 """
 
+from sys import argv
+from timeit import repeat as timeit_repeat
+
 from numpy.random import randint
 
 from src.Wesen.loader import Loader
-from src.Wesen.defaults import DEFAULT_CONFIGFILE
-
-from sys import argv
-from timeit import repeat as timeit_repeat
 
 
 def getRangeIterator_3_c(objectIterator, position, radius, condition=None):

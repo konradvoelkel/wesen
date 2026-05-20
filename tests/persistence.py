@@ -6,10 +6,11 @@ if __name__ == "__main__":
     sys.path.append("../src")
 
 import unittest
-from Wesen.world import World
-from Wesen.defaults import DEFAULT_CONFIGFILE
+
 from Wesen.configed import ConfigEd
+from Wesen.defaults import DEFAULT_CONFIGFILE
 from Wesen.wesend import Wesend
+from Wesen.world import World
 
 
 class TestPersistence(unittest.TestCase):

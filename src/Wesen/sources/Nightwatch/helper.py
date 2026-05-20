@@ -25,7 +25,7 @@ def CatchTarget(self, Action, actionTime):
             self.target = None
             if Action(self, targ):
                 return True
-            elif not targ["id"] in self.forbiddenTargets:
+            elif targ["id"] not in self.forbiddenTargets:
                 self.forbiddenTargets.append(targ["id"])
     return False
 

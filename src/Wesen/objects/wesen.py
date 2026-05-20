@@ -207,7 +207,7 @@ class Wesen(WorldObject):
         """if it's at the same position, eat the food with python object id foodid."""
         if self.dead:
             return False
-        if not foodid in self.worldObjects:
+        if foodid not in self.worldObjects:
             raise RuleException("Tried to eat non-existing food")
         o = self.worldObjects[foodid]
         if (o.position == self.position) and (o.objectType == "food"):

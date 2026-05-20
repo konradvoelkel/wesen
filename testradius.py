@@ -35,13 +35,13 @@ This time consumption can be roughly explained:
   instead of comparing against 0
 """
 
-from numpy import array as numpyarray
-from numpy import abs as numpyabs
-from numpy.linalg import norm as numpylinalgnorm
-from numpy import inf as maxmetric
-from numpy.random import randint
-
 from timeit import repeat as timeit_repeat
+
+from numpy import abs as numpyabs
+from numpy import array as numpyarray
+from numpy import inf as maxmetric
+from numpy.linalg import norm as numpylinalgnorm
+from numpy.random import randint
 
 
 def explicit_abs_0(p, q, radius):
