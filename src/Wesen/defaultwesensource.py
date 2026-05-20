@@ -1,7 +1,7 @@
 """defines an interface for AI code"""
 
 
-class DefaultWesenSource(object):
+class DefaultWesenSource:
 
     """each AI code should subclass this class."""
 

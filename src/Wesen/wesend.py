@@ -13,7 +13,7 @@ import json
 # TODO change the name of this class (it is not a daemon)
 
 
-class Wesend(object):
+class Wesend:
 
     """Wesend(config)
             Runs one Wesen game by start(), with given config data.
@@ -39,7 +39,7 @@ class Wesend(object):
                         "time": self.infoTime}
         if (config.pop("resume", False) and
                 exists(DEFAULT_GAME_STATE_FILE)):
-            with open(DEFAULT_GAME_STATE_FILE, "r") as f:
+            with open(DEFAULT_GAME_STATE_FILE) as f:
                 string = f.read()
                 d = json.loads(string)
                 infoAllWorld.update(d)

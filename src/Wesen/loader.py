@@ -148,7 +148,7 @@ class _OverwriteConfigAction(Action):
 
     def __init__(self, option_strings, dest, section, nargs=1):
         helpMessage = (STRING_USAGE_OVERWRITE % (section, dest))
-        super(_OverwriteConfigAction, self)\
+        super()\
             .__init__(option_strings=option_strings,
                       dest=dest, nargs=nargs,
                       const=False, default=None,
@@ -178,7 +178,7 @@ class _OverwriteConfigActionBool(_OverwriteConfigAction):
     """For convenience, storing True/False as specified"""
 
     def __init__(self, option_strings, dest, section, storeValue=None):
-        super(_OverwriteConfigActionBool, self)\
+        super()\
             .__init__(option_strings=option_strings,
                       dest=dest, section=section,
                       nargs=0)
@@ -187,5 +187,5 @@ class _OverwriteConfigActionBool(_OverwriteConfigAction):
     def __call__(self, parser, namespace, values, option_string=None):
         if(self.storeValue != None):
             values = [self.storeValue]
-        super(_OverwriteConfigActionBool, self).__call__(
+        super().__call__(
             parser, namespace, values)

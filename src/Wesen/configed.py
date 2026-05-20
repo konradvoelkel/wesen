@@ -15,14 +15,12 @@ from .strings import STRING_ERROR_FILEEXISTS, \
 from sys import version_info
 if version_info.major == 3 and version_info.minor < 2:  # pre version 3.2
     from configparser import SafeConfigParser
-elif version_info.major >= 3:  # up to date version
+else:  # up to date version
     from configparser import ConfigParser as SafeConfigParser
-else:  # python2
-    from ConfigParser import SafeConfigParser
 import os.path
 
 
-class ConfigEd(object):
+class ConfigEd:
 
     """ConfigEd(filename) creates a full powered config editor for wesen"""
 
@@ -33,7 +31,7 @@ class ConfigEd(object):
 
     def printConfig(self):
         """prints the configfile to screen"""
-        print(("%s:" % self.configfile))
+        print("%s:" % self.configfile)
         for line in open(self.configfile).readlines():
             print(line[:-1])
             # -1 for \n removal
@@ -108,9 +106,9 @@ class ConfigEd(object):
                     key = option[0]
                     self.setDefInputStandard(section, key)
             self.configParser.write(open(self.configfile, "w"))
-            print((STRING_MESSAGE_WROTE % self.configfile))
+            print(STRING_MESSAGE_WROTE % self.configfile)
         else:
-            print((STRING_ERROR_NOTWROTE % self.configfile))
+            print(STRING_ERROR_NOTWROTE % self.configfile)
 
     def setDefInputStandard(self, section, key):
         """fetches explanation from .strings

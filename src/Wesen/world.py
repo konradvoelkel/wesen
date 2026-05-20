@@ -7,7 +7,7 @@ from .objects.food import Food
 import json
 
 
-class World(object):
+class World:
 
     """A World object contains a single Wesen simulation,
     In the MVC paradigm it is M+C.
