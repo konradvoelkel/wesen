@@ -42,7 +42,7 @@ def Loader(run_immediately=True):
     then Loader returns a Wesend instance,
     which you can start by start()"""
     _enableCustomSourcesFolder()
-    (parsedArgs, extraArgs) = _parseArgs()
+    parsedArgs, extraArgs = _parseArgs()
     configEd = ConfigEd(parsedArgs.configfile)
     if parsedArgs.invoke_defaultconfig:
         configEd.writeDefaults()
@@ -224,7 +224,10 @@ class _OverwriteConfigActionBool(_OverwriteConfigAction):
 
     def __init__(self, option_strings, dest, section, storeValue=None):
         super().__init__(
-            option_strings=option_strings, dest=dest, section=section, nargs=0
+            option_strings=option_strings,
+            dest=dest,
+            section=section,
+            nargs=0,
         )
         self.storeValue = storeValue
 

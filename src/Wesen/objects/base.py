@@ -43,7 +43,7 @@ class WorldObject:
         #      There is still room for improvement.
         # SEE testradius.py and testrange.py
         # TODO: apparently this comment is outdated already?
-        (x, y) = self.position
+        x, y = self.position
         minX = max(0, x - radius)
         maxX = min(self.infoWorld["length"], x + radius + 1)
         # +1 since upper bound of range is exclusive

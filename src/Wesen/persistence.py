@@ -17,8 +17,12 @@ def persistence(func, static, dynamic):
             )
         else:
             __getter, __setter = dynamic[entry]
-            getter = __getter or (lambda that: that.__getattribute__(entry))
-            setter = __setter or (lambda that, v: that.__setattr__(entry, v))
+            getter = __getter or (
+                lambda that: that.__getattribute__(entry)
+            )
+            setter = __setter or (
+                lambda that, v: that.__setattr__(entry, v)
+            )
             dynamic[entry] = (getter, setter)
 
     @wraps(func)

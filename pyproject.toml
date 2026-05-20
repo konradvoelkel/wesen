@@ -26,11 +26,11 @@ pacman = ["freeglut"]
 homebrew = ["freeglut"]
 
 [tool.ruff]
-line-length = 80
+line-length = 75
 target-version = "py312"
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "UP"]
+select = ["E", "F", "W", "Q", "I", "UP"]
 
 [tool.mypy]
 strict = false

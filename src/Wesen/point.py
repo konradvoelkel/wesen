@@ -13,10 +13,13 @@ def getRandomPosition(length):  # unused
     return [randint(0, length - 1), randint(0, length - 1)]
 
 
-def getRandomPositionInRadius(position, radius, length):  # TODO move to Food
+def getRandomPositionInRadius(
+    position, radius, length
+):  # TODO move to Food
     """x + random(-radius,+radius)"""
     return [
-        (length + pc + randint(-radius, radius)) % length for pc in position
+        (length + pc + randint(-radius, radius)) % length
+        for pc in position
     ]
 
 

@@ -123,7 +123,8 @@ class Wesen(WorldObject):
                     "source": o.source,
                 }
                 for oid, o in self.getRangeIterator(
-                    self.infoRange["closer_look"], condition=lambda x: self != x
+                    self.infoRange["closer_look"],
+                    condition=lambda x: self != x,
                 )
             ]
         else:
@@ -140,17 +141,25 @@ class Wesen(WorldObject):
         if direction[0] < 0:
             if direction[1] < 0:
                 usedTime = (
-                    self.infoTime["move"] * -1 * (direction[0] + direction[1])
+                    self.infoTime["move"]
+                    * -1
+                    * (direction[0] + direction[1])
                 )
             elif direction[1] > 0:
-                usedTime = self.infoTime["move"] * (direction[1] - direction[0])
+                usedTime = self.infoTime["move"] * (
+                    direction[1] - direction[0]
+                )
             else:
                 usedTime = self.infoTime["move"] * -1 * direction[0]
         elif direction[0] > 0:
             if direction[1] < 0:
-                usedTime = self.infoTime["move"] * (direction[0] - direction[1])
+                usedTime = self.infoTime["move"] * (
+                    direction[0] - direction[1]
+                )
             elif direction[1] > 0:
-                usedTime = self.infoTime["move"] * (direction[1] + direction[0])
+                usedTime = self.infoTime["move"] * (
+                    direction[1] + direction[0]
+                )
             else:
                 usedTime = self.infoTime["move"] * direction[0]
         else:

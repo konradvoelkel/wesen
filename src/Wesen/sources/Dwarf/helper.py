@@ -20,7 +20,10 @@ def recoverAge(self):
 def CatchTarget(self, Action, actionTime):
     targ = self.target
     if self.MoveToPosition(targ["position"]):
-        if targ["position"] == self.position() and self.time() >= actionTime:
+        if (
+            targ["position"] == self.position()
+            and self.time() >= actionTime
+        ):
             self.target = None
             if Action(self, targ):
                 return True
@@ -45,7 +48,9 @@ def AttackTarget(self):
     return CatchTarget(self, AttackObject, self.infoTime["attack"] + 1)
 
 
-def lookForTarget(self, lookRange, objectType, objectCondition, objectFitness):
+def lookForTarget(
+    self, lookRange, objectType, objectCondition, objectFitness
+):
     # TODO now ignores objectFitness, uses positionFitness instead;
     matchingObjects = [
         o
@@ -108,7 +113,9 @@ def enemyFitness(a):
 def lookForFoodTarget(self, lookRange=None):
     if not lookRange:
         lookRange = self.closerLook()
-    return lookForTarget(self, lookRange, "food", acceptableFood, foodFitness)
+    return lookForTarget(
+        self, lookRange, "food", acceptableFood, foodFitness
+    )
 
 
 def lookForEnemyTarget(self, lookRange=None):
@@ -165,7 +172,9 @@ def Flee(self):
             self,
             scanVector=[
                 -1 * (tc - pc)
-                for (tc, pc) in zip(self.target["position"], self.position())
+                for (tc, pc) in zip(
+                    self.target["position"], self.position()
+                )
             ],
         )
 

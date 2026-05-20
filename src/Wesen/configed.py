@@ -50,13 +50,15 @@ class ConfigEd:
             self.configParser.read(self.configfile)
             result = {}
             for entry in CONFIG_OPTIONS:
-                (section, options) = entry
+                section, options = entry
                 result[section] = {}
                 if self.configParser.has_section(section):
                     for option in options:
-                        (key, entryType) = option
-                        result[section][key] = self.getEntryFromConfigParser(
-                            section, key, entryType
+                        key, entryType = option
+                        result[section][key] = (
+                            self.getEntryFromConfigParser(
+                                section, key, entryType
+                            )
                         )
             return result
         else:
@@ -100,7 +102,7 @@ class ConfigEd:
         if write:
             self.configParser.read(self.configfile)
             for entry in CONFIG_OPTIONS:
-                (section, options) = entry
+                section, options = entry
                 if not self.configParser.has_section(section):
                     self.configParser.add_section(section)
                 if not self.alwaysDefaults:
@@ -122,7 +124,9 @@ class ConfigEd:
             section,
             key,
             str(
-                self.def_input(CONFIG_DEFAULTS[section][key], explanationString)
+                self.def_input(
+                    CONFIG_DEFAULTS[section][key], explanationString
+                )
             ),
         )
 

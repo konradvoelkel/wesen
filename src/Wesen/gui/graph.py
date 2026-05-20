@@ -97,7 +97,9 @@ class Graph(GuiObject):
     def Step(self):
         """adds current world.stats as data point to all sensors."""
         for sensorInfo, data in zip(self.sensors, self.history):
-            data.AddValue(sensorInfo["f"](self.world)(sensorInfo["statskey"]))
+            data.AddValue(
+                sensorInfo["f"](self.world)(sensorInfo["statskey"])
+            )
         self.maxValue = max(
             self.maxValue, max(data.maxValue for data in self.history)
         )
@@ -162,9 +164,9 @@ class _SensorData:
             self.buffer_full = True
         self.previous_index = (self.previous_index + 1) % self.size
         self.buf[self.previous_index * 2 + 1] = value
-        self.vbo[self.previous_index * 2 + 1 : self.previous_index * 2 + 2] = (
-            narray([value], "f")
-        )
+        self.vbo[
+            self.previous_index * 2 + 1 : self.previous_index * 2 + 2
+        ] = narray([value], "f")
         self.maxValue = max(self.maxValue, value)
 
     def Draw(self):

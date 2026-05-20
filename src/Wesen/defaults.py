@@ -46,7 +46,12 @@ CONFIG_OPTIONS = [
     ],  # in percent
     [
         "range",
-        [("look", int), ("closer_look", int), ("talk", int), ("seed", int)],
+        [
+            ("look", int),
+            ("closer_look", int),
+            ("talk", int),
+            ("seed", int),
+        ],
     ],
     [
         "time",

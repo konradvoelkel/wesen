@@ -47,12 +47,15 @@ class Text(GuiObject):
         p = self.printer
         p.Print("paused" if self.gui.pause else "running")
         p.Print(
-            "\n\n\n%3.1f fps,  %8d turns\n\n" % (self.gui.fps, self.world.turns)
+            "\n\n\n%3.1f fps,  %8d turns\n\n"
+            % (self.gui.fps, self.world.turns)
         )
         # p.Print("manual slowdown: %3d percent" %
         # (int(100.0/self.gui.speed)));
 
-    def DrawGivenText(self):  # TODO replace this mechanism by something else
+    def DrawGivenText(
+        self,
+    ):  # TODO replace this mechanism by something else
         """Draws the last text given previously by Print(line)"""
         if self.givenText is not None:
             self.printer.Print("\n")
@@ -71,7 +74,9 @@ class TextPrinter:
     Use ResetRaster() and then Print(text)."""
 
     def __init__(self):
-        self.x = 0  # TODO x currently unused, results in suboptimal resizing
+        self.x = (
+            0  # TODO x currently unused, results in suboptimal resizing
+        )
         self.y = 0.03  # TODO where does the magic number come from?
         self.rasterPos = 0
         self.ResetRaster()

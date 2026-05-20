@@ -57,7 +57,9 @@ class WesenSource(DefaultWesenSource):
                 else:
                     foundEnemy = False
                     if self.energy() > self.minimumEnergyToFight:
-                        foundEnemy = helper.lookForEnemyTarget(self, lookRange)
+                        foundEnemy = helper.lookForEnemyTarget(
+                            self, lookRange
+                        )
                         # if found, this will be handled next loop iteration!
                     if not foundEnemy:
                         # nothing to eat, no fights. OK. Time for gardening.
@@ -75,13 +77,15 @@ class WesenSource(DefaultWesenSource):
                             elif decision <= 4:
                                 # move away!
                                 helper.ScannerMove(
-                                    self, scanVector=__class__.globalScanVector
+                                    self,
+                                    scanVector=__class__.globalScanVector,
                                 )
                             else:
                                 # move back!
                                 helper.ScannerMove(
                                     self,
                                     scanVector=[
-                                        -c for c in __class__.globalScanVector
+                                        -c
+                                        for c in __class__.globalScanVector
                                     ],
                                 )

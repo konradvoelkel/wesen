@@ -110,13 +110,21 @@ class GUI(BasicGUI):
         )
         self._generateKeyExplanations()
         self.keyExplanation = {
-            self._getKeyRepresentation(key): str(self.keybindings[key].__doc__)
+            self._getKeyRepresentation(key): str(
+                self.keybindings[key].__doc__
+            )
             for key in self.keybindings
         }
-        self.keyExplanation[self._getKeyRepresentation(100)] = "delete food"
-        self.keyExplanation[self._getKeyRepresentation(101)] = "increase food"
+        self.keyExplanation[self._getKeyRepresentation(100)] = (
+            "delete food"
+        )
+        self.keyExplanation[self._getKeyRepresentation(101)] = (
+            "increase food"
+        )
         self.keyExplanation[self._getKeyRepresentation(102)] = "add food"
-        self.keyExplanation[self._getKeyRepresentation(103)] = "decrease food"
+        self.keyExplanation[self._getKeyRepresentation(103)] = (
+            "decrease food"
+        )
 
     def ToggleMovie(self):
         """Toggle movie mode on/off. In movie mode, each frame is saved to disk."""
@@ -131,10 +139,12 @@ class GUI(BasicGUI):
 
     def takeScreenshot(self):
         """takes a screenshot of the map region"""
-        (width, height) = self.windowSize
+        width, height = self.windowSize
         buffer = (GLubyte * (3 * width * height))(0)
         glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, buffer)
-        image = Image.fromstring(mode="RGB", size=(width, height), data=buffer)
+        image = Image.fromstring(
+            mode="RGB", size=(width, height), data=buffer
+        )
         # use image coordinates, not OpenGL coordinates:
         image = image.transpose(Image.FLIP_TOP_BOTTOM)
         # take only the Map part of the screenshot:

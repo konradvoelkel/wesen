@@ -133,8 +133,8 @@ class Map(GuiObject):
         if index > 0:
             values = self.__descToArray(obj)
             num_values = len(values)
-            self._vbo[index * num_values : (index + 1) * num_values] = narray(
-                values, "f"
+            self._vbo[index * num_values : (index + 1) * num_values] = (
+                narray(values, "f")
             )
             self._indices[_id] = index
         else:
@@ -211,7 +211,9 @@ class Map(GuiObject):
                 # 4 color values with 2 coordinates with 4 bytes each in
                 # between
                 glColorPointer(4, GL_FLOAT, 24, self._vbo + 8)
-                glDrawArrays(GL_TRIANGLES, 0, 3 * 2 * (self._max_index + 1))
+                glDrawArrays(
+                    GL_TRIANGLES, 0, 3 * 2 * (self._max_index + 1)
+                )
             finally:
                 self._vbo.unbind()
                 glDisableClientState(GL_VERTEX_ARRAY)

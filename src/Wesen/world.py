@@ -15,7 +15,9 @@ class World:
     Via AddObject(info) and DeleteObject(id)
     one can manipulate the simulation."""
 
-    def __init__(self, infoAllWorld=None, createObjects=True, callbacks={}):
+    def __init__(
+        self, infoAllWorld=None, createObjects=True, callbacks={}
+    ):
         """infoAllWorld is a dictionary of dictionaries"""
         self.callbacks = callbacks
         if infoAllWorld is not None:

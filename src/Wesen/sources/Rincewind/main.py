@@ -93,7 +93,9 @@ class WesenSource(DefaultWesenSource):
             self.midPoint = reduce(
                 lambda a, b: [
                     a[i]
-                    + float(b["energy"]) / float(totalEnergy) * b["position"][i]
+                    + float(b["energy"])
+                    / float(totalEnergy)
+                    * b["position"][i]
                     for i in range(len(a))
                 ],
                 foods,

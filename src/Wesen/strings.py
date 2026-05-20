@@ -7,9 +7,7 @@ from .defaults import DEFAULT_CONFIGFILE, DEFAULT_GAME_STATE_FILE
 VERSIONSTRING = "wesen 0.6.0-alpha"
 URL = "https://github.com/reims/wesen"
 
-STRING_ERROR_NOTSAMEPATH = (
-    "There is a path problem. The program could not find the desired files."
-)
+STRING_ERROR_NOTSAMEPATH = "There is a path problem. The program could not find the desired files."
 STRING_ERROR_FILEEXISTS = "file %s already exists, overwrite? (y, n) "
 STRING_ERROR_NOTWROTE = "didn't write file %s"
 
@@ -32,7 +30,9 @@ STRING_CONFIGED = {
         "SIZE": "\nsize=",
         "POS": "\npos=",
     },
-    "WORLD": {"LENGTH": "(length of the worlds x-axis and y-axis)\nlength="},
+    "WORLD": {
+        "LENGTH": "(length of the worlds x-axis and y-axis)\nlength="
+    },
     "FOOD": {
         "COUNT": "(how many food places at start)\ncount=",
         "ENERGY": "(starting energy of every food place at the beginning)\namount=",

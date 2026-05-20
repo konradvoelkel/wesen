@@ -192,22 +192,32 @@ class BasicGUI:
         >>> self._getKeyRepresentation(27)
         <ESC>
         """
+
         def specialKeyRepresentation(key):
             return (
-                    "<ESC>"
-                    if key == 27
-                    else "<RETURN>"
+                "<ESC>"
+                if key == 27
+                else (
+                    "<RETURN>"
                     if key == 13
-                    else "<LEFT>"
-                    if key == 100
-                    else "<UP>"
-                    if key == 101
-                    else "<RIGHT>"
-                    if key == 102
-                    else "<DOWN>"
-                    if key == 103
-                    else str(key)
+                    else (
+                        "<LEFT>"
+                        if key == 100
+                        else (
+                            "<UP>"
+                            if key == 101
+                            else (
+                                "<RIGHT>"
+                                if key == 102
+                                else "<DOWN>"
+                                if key == 103
+                                else str(key)
+                            )
+                        )
+                    )
                 )
+            )
+
         return (
             key.decode("ascii")
             if type(key) is bytes
@@ -218,7 +228,9 @@ class BasicGUI:
         """takes current key bindings and generates hints
         using nice string representations and docstrings"""
         self.keyExplanation = {
-            self._getKeyRepresentation(key): str(self.keybindings[key].__doc__)
+            self._getKeyRepresentation(key): str(
+                self.keybindings[key].__doc__
+            )
             for key in self.keybindings
         }
 
