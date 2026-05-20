@@ -25,7 +25,9 @@ from OpenGL.GL import (
 from .object import GuiObject
 from .text import TextPrinter
 
-SENSORFCT_FROMSTATS_ENERGY = lambda world: lambda x: world.stats[x]["energy"]
+
+def SENSORFCT_FROMSTATS_ENERGY(world):
+    return lambda x: world.stats[x]["energy"]
 
 
 class Graph(GuiObject):
@@ -123,7 +125,7 @@ class Graph(GuiObject):
             # to make the color effective for text,
             # we have to call glRasterPos by printing a linebreak:
             p.Print("\n")
-            p.Print("  %s" % (sensorInfo["name"]))
+            p.Print("  {}".format(sensorInfo["name"]))
 
     def Draw(self):
         GuiObject.Draw(self)

@@ -34,7 +34,7 @@ class ConfigEd:
 
     def printConfig(self):
         """prints the configfile to screen"""
-        print("%s:" % self.configfile)
+        print(f"{self.configfile}:")
         for line in open(self.configfile).readlines():
             print(line[:-1])
             # -1 for \n removal
@@ -104,7 +104,7 @@ class ConfigEd:
                 if not self.configParser.has_section(section):
                     self.configParser.add_section(section)
                 if not self.alwaysDefaults:
-                    print("[%s]" % (section))
+                    print(f"[{section}]")
                 for option in options:
                     key = option[0]
                     self.setDefInputStandard(section, key)
@@ -133,7 +133,7 @@ class ConfigEd:
         """
         if not self.alwaysDefaults:
             try:
-                result = input("# default: %s\t%s" % (default, msg))
+                result = input(f"# default: {default}\t{msg}")
             except EOFError:
                 self.alwaysDefaults = True
                 return default

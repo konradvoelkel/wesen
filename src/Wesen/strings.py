@@ -76,6 +76,6 @@ STRING_USAGE_PRINTCONFIG = (
 )
 STRING_USAGE_OVERWRITE = "overwrite config [%s] %s"
 STRING_USAGE_RESUME = (
-    "resumes game stored in %s if exists" % DEFAULT_GAME_STATE_FILE
+    f"resumes game stored in {DEFAULT_GAME_STATE_FILE} if exists"
 )
 STRING_USAGE_EPILOG = "all other arguments are passed to OpenGL"

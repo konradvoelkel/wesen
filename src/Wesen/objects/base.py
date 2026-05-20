@@ -29,11 +29,7 @@ class WorldObject:
         )
 
     def __repr__(self):
-        return "<worldobject id=%s pos=%s energy=%s>" % (
-            id(self),
-            self.position,
-            self.energy,
-        )
+        return f"<worldobject id={id(self)} pos={self.position} energy={self.energy}>"
 
     def getRangeIterator(self, radius, condition):
         """returns an iterator of pairs (id, object)

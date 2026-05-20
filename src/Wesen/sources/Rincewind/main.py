@@ -52,7 +52,7 @@ class WesenSource(DefaultWesenSource):
         return self.position() != oldPos
 
     def bestFoodInRange(self, foods):
-        movingRange = int(
+        int(
             (self.time() - self.infoAllSource["time"]["eat"])
             / self.infoAllSource["time"]["move"]
         )

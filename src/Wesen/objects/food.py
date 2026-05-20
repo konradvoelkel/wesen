@@ -21,12 +21,7 @@ class Food(WorldObject):
         self.maxage = self.infoObject["maxage"]
 
     def __repr__(self):
-        return "<food id=%s growrate=%s pos=%s energy=%s>" % (
-            id(self),
-            self.growrate,
-            self.position,
-            self.energy,
-        )
+        return f"<food id={id(self)} growrate={self.growrate} pos={self.position} energy={self.energy}>"
 
     def getDescriptor(self):
         """currently doing nothing than returning the WorldObjects getDescriptor."""

@@ -47,12 +47,7 @@ class Wesen(WorldObject):
         self.PutInterface(self.wesenSource)
 
     def __repr__(self):
-        return "<wesen id=%s pos=%s energy=%s source=%s>" % (
-            id(self),
-            self.position,
-            self.energy,
-            str(self.wesenSource),
-        )
+        return f"<wesen id={id(self)} pos={self.position} energy={self.energy} source={str(self.wesenSource)}>"
 
     def PutInterface(self, source):
         """maps the source functions to the corresponding wesen functions."""
@@ -256,7 +251,7 @@ class Wesen(WorldObject):
             o = self.worldObjects[wesenid]
         except KeyError:
             raise RuleException(
-                "May not attack non-existent enemy with id '%s'" % (wesenid)
+                f"May not attack non-existent enemy with id '{wesenid}'"
             )
         if (o.objectType == "wesen") and (o.position == self.position):
             if self._UseTime("attack"):

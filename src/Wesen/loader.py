@@ -229,6 +229,6 @@ class _OverwriteConfigActionBool(_OverwriteConfigAction):
         self.storeValue = storeValue
 
     def __call__(self, parser, namespace, values, option_string=None):
-        if self.storeValue != None:
+        if self.storeValue is not None:
             values = [self.storeValue]
         super().__call__(parser, namespace, values)

@@ -192,21 +192,22 @@ class BasicGUI:
         >>> self._getKeyRepresentation(27)
         <ESC>
         """
-        specialKeyRepresentation = lambda key: (
-            "<ESC>"
-            if key == 27
-            else "<RETURN>"
-            if key == 13
-            else "<LEFT>"
-            if key == 100
-            else "<UP>"
-            if key == 101
-            else "<RIGHT>"
-            if key == 102
-            else "<DOWN>"
-            if key == 103
-            else str(key)
-        )
+        def specialKeyRepresentation(key):
+            return (
+                    "<ESC>"
+                    if key == 27
+                    else "<RETURN>"
+                    if key == 13
+                    else "<LEFT>"
+                    if key == 100
+                    else "<UP>"
+                    if key == 101
+                    else "<RIGHT>"
+                    if key == 102
+                    else "<DOWN>"
+                    if key == 103
+                    else str(key)
+                )
         return (
             key.decode("ascii")
             if type(key) is bytes

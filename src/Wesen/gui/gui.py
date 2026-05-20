@@ -90,7 +90,7 @@ class GUI(BasicGUI):
             self.Pause()
         else:
             raise NotImplementedError(
-                "unknown action from popup-menu (%s)" % (action)
+                f"unknown action from popup-menu ({action})"
             )
         return 0
 
