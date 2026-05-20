@@ -10,7 +10,7 @@ class RuleException(Exception):
     violates the rules of the game."""
 
     def __init__(self, ruleDescription):
-        super(RuleException, self).__init__(ruleDescription)
+        super().__init__(ruleDescription)
 
 
 class Wesen(WorldObject):

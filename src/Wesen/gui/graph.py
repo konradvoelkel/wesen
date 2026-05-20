@@ -111,7 +111,7 @@ class Graph(GuiObject):
         self.DrawPlot()
 
 
-class _SensorData(object):
+class _SensorData:
 
     """A _SensorData object holds the data
     for a single sensor, including previous data.

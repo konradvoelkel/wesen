@@ -68,7 +68,7 @@ class GUI(BasicGUI):
     def HandleAction(self, action):
         """handles actions from the popup-menu"""
         if(action == 55):
-            line = "".join(["'%s' %s\n" % (key, self.keyExplanation[key])
+            line = "".join(["'{}' {}\n".format(key, self.keyExplanation[key])
                             for key in sorted(self.keyExplanation.keys())])
             self.text.Print(line)
         elif(action == 100):
@@ -130,4 +130,4 @@ class GUI(BasicGUI):
         """draws the actual descriptor"""
         BasicGUI.RenderScene(self)
         if(self.movieMode):
-            self.takeScreenshot().save(("m%08d.png" % (self.turns)))
+            self.takeScreenshot().save("m%08d.png" % (self.turns))

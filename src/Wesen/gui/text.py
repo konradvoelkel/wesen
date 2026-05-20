@@ -68,7 +68,7 @@ class Text(GuiObject):
         self.DrawGivenText()
 
 
-class TextPrinter(object):
+class TextPrinter:
 
     """A printer that uses OpenGL to draw strings.
     Use ResetRaster() and then Print(text)."""

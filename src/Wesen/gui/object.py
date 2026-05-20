@@ -3,7 +3,7 @@
 from OpenGL.GL import glColor3f, glRectf
 
 
-class GuiObject(object):
+class GuiObject:
 
     """A GuiObject maintains a visual frame around it."""
 

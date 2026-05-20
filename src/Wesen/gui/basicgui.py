@@ -32,7 +32,7 @@ cl_default = [[1.0, 0.0, 0.0], [0.0, 0.0, 1.0],
               [0.5, 0.5, 0.0], [0.0, 0.5, 0.5]]
 
 
-class BasicGUI(object):
+class BasicGUI:
     """This GUI can be subclassed to enable more sophisticated display methods.
     This class handles all dirty OpenGL work.
     There are three components: Map, Graph and Text.

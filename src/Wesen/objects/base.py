@@ -3,7 +3,7 @@
 from ..point import getRandomPosition
 
 
-class WorldObject(object):
+class WorldObject:
 
     """this class is an abstraction to all world objects,
     as Wesen, Food and maybe some day something else.
