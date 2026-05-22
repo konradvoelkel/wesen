@@ -1,5 +1,6 @@
 """The basic OpenGL GUI code"""
 
+import os
 import sys
 import traceback
 
@@ -156,7 +157,7 @@ class BasicGUI:
         """Stop the simulation and quit"""
         glFinish()
         self.world.DumpGameState()
-        sys.exit()
+        os._exit(0)
 
     def Pause(self):
         """Pause/Unpause the simulation"""
