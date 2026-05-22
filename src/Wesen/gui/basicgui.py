@@ -43,6 +43,9 @@ from OpenGL.GLUT import (
     glutReshapeFunc,
     glutSpecialFunc,
     glutSwapBuffers,
+    glutSetOption,
+    GLUT_ACTION_ON_WINDOW_CLOSE,
+    GLUT_ACTION_GLUTMAINLOOP_RETURNS
 )
 
 from ..strings import VERSIONSTRING
@@ -143,6 +146,7 @@ class BasicGUI:
         glutInitWindowPosition(self.initx, self.inity)
         glutInit(extraArgs.split(" "))
         glutCreateWindow(VERSIONSTRING.encode("ascii"))
+        glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_GLUTMAINLOOP_RETURNS)
         glutDisplayFunc(self.Draw)
         glutIdleFunc(glutPostRedisplay)
         glutReshapeFunc(self.Reshape)
@@ -157,7 +161,12 @@ class BasicGUI:
         """Stop the simulation and quit"""
         glFinish()
         self.world.DumpGameState()
-        os._exit(0)
+        try: # this might not work in Windows
+            from OpenGL.GLUT import glutLeaveMainLoop
+            glutLeaveMainLoop()
+        except Exception: # Fallback for systems running legacy GLUT without FreeGLUT extensions
+            import os
+            os._exit(0)
 
     def Pause(self):
         """Pause/Unpause the simulation"""
