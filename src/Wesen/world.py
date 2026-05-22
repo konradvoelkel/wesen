@@ -1,5 +1,7 @@
 """The world in which Wesen takes place"""
 
+import numpy as np
+
 import json
 
 from .defaults import DEFAULT_GAME_STATE_FILE
@@ -30,20 +32,16 @@ class World:
         """sets the infoAllWorld and initializes member variables"""
         # copy everything that will be modified
         self.infoAllWorld = infoAllWorld.copy()
-        self.infoAllWorld.update(
-            {
-                "wesen": infoAllWorld["wesen"].copy(),
-                "world": infoAllWorld["world"].copy(),
-                "food": infoAllWorld["food"].copy(),
-            }
-        )
+        self.infoAllWorld.update({
+            k: infoAllWorld[k].copy() 
+            for k in ("wesen", "world", "food")
+        })
         self.objects = {}
         self.turns = infoAllWorld.get("turns", 0)
         self.stats = {}
-        self.map = [
-            [{} for _ in range(infoAllWorld["world"]["length"])]
-            for _ in range(infoAllWorld["world"]["length"])
-        ]
+        length = infoAllWorld["world"]["length"]
+        self.map = np.empty((length, length), dtype=object)
+        self.map.flat = [{} for _ in range(length**2)]
         # is initialized depending on sources in initStats()
         self.infoAllWorld["world"].update(
             {
