@@ -146,7 +146,8 @@ class BasicGUI:
         glutInitWindowPosition(self.initx, self.inity)
         glutInit(extraArgs.split(" "))
         glutCreateWindow(VERSIONSTRING.encode("ascii"))
-        glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_GLUTMAINLOOP_RETURNS)
+        if bool(glutSetOption):
+            glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_GLUTMAINLOOP_RETURNS)
         glutDisplayFunc(self.Draw)
         glutIdleFunc(glutPostRedisplay)
         glutReshapeFunc(self.Reshape)
