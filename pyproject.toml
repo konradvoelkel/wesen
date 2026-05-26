@@ -1,6 +1,6 @@
 [project]
 name = "wesen"
-version = "0.3.0"
+version = "0.7.0"
 description = "game where players program the behavior of their Wesens to defeat the other players"
 readme = "README.md"
 requires-python = ">=3.10"
