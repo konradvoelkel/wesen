@@ -7,8 +7,8 @@ Wesen - little game where players have to program the behavior of their Wesens t
 History
 =====
   * 2003 version 0.1 for Python 2
-  * 2013 version 0.2 for Python 3
-  * 2026 version 0.3 for Python > 3.7
+  * 2013 version 0.6 for Python 3
+  * 2026 version 0.7 for Python > 3.7
 
 Run/Install/Build
 =====
