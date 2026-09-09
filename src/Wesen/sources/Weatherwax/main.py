@@ -35,8 +35,10 @@ Land - fertility and exploration.
     and a bigger pie is the only long-term win.
 
 People - the colony.
-    Population follows the known pasture (one wesen per `CELLS_PER_WESEN`
-    known cells, between `MIN_COLONY` and `MAX_COLONY`); a child is sent
+    Population follows the pasture *this wesen keeps*: it splits while
+    the ground closer to its anchor than to any colleague's holds more
+    than `CELLS_PER_WESEN` known cells, or while there is no colleague
+    near it at all. A child is sent
     to a free site of the map away from every other anchor, so the herd
     spreads over the land instead of trampling one cluster. Old age is
     cured by reproducing. Upkeep grows with the body, so many moderate
@@ -109,9 +111,10 @@ class WesenSource(DefaultWesenSource):
     RESERVE_BASE = 300  # body below which we bite cells to the roots
     RESERVE_MAX = 600  # ... at most this, however long the winter
     STARVING = 90  # below this even the last bite of a cell
-    CELLS_PER_WESEN = 100  # population target: known cells per wesen
+    CELLS_PER_WESEN = 100  # cells a district needs per extra wesen
+    DISTRICT_RANGE = 60  # how far from its anchor a district reaches
+    DISTRICT_EVERY = 8  # turns between two counts of it
     SEEDER_SHARE = 3  # one cell in this many is left to mature and seed
-    MIN_COLONY = 5
     MAX_COLONY = 64
     ANCHOR_SEP = 16  # a child's site keeps this far from other anchors
     SITE_RANGE = 80  # ... and is looked for this far from the parent
@@ -174,6 +177,9 @@ class WesenSource(DefaultWesenSource):
         self.enemies = []
         self.enemiesHere = []
         self.friendsHere = 0
+        self.districtCells = 0  # local carrying capacity (see district)
+        self.districtTurn = -99
+        self.neighbours = 0
         if cls.fertTiles is None:
             cls.sampleTerrain(self)
 
@@ -834,12 +840,61 @@ class WesenSource(DefaultWesenSource):
 
     # --- the colony ------------------------------------------------------
 
-    def populationTarget(self):
+    def district(self):
+        """the cells this wesen keeps: the ones it knows of within
+        reach of its anchor and closer to that anchor than to any
+        colleague's - the local carrying capacity, and what the
+        population rule is measured against.
+
+        A colony-wide count cannot be had honestly: nobody ever hears
+        the whole roll, so every wesen under-counts and every wesen
+        concludes on its own that there is room for one more. This does
+        not need the whole roll. The ground a wesen keeps shrinks as
+        colleagues settle around it - it is the Voronoi cell of the
+        anchors it knows about - so the colony stops growing exactly
+        where the pasture stops paying, and it stops locally, in the
+        places that are full, while the empty ground is still filling.
+
+        Recomputed every `DISTRICT_EVERY` turns: it is a scan of the
+        map around the anchor and it does not change quickly."""
         cls = type(self)
-        return max(
-            cls.MIN_COLONY,
-            min(cls.MAX_COLONY, cls.cellCount // cls.CELLS_PER_WESEN),
-        )
+        if cls.worldTurn - self.districtTurn < cls.DISTRICT_EVERY:
+            return self.districtCells
+        self.districtTurn = cls.worldTurn
+        home = self.anchor or tuple(self.position())
+        anchors = [
+            rec[0]
+            for rec in self.colony.peers().values()
+            if self.torusManhattan(home, rec[0]) <= cls.DISTRICT_RANGE * 2
+        ]
+        count = 0
+        for cell, entry in self.cellsNear(home, cls.DISTRICT_RANGE):
+            mine = self.torusManhattan(home, cell)
+            if mine > cls.DISTRICT_RANGE:
+                continue
+            if any(self.torusManhattan(a, cell) < mine for a in anchors):
+                continue  # a colleague keeps this ground, not I
+            count += 1
+        self.districtCells = count
+        self.neighbours = len(anchors)
+        return count
+
+    def roomForAnother(self):
+        """may the colony grow, as far as this wesen can tell?
+
+        On the frontier - no colleague anywhere near the ground I keep -
+        the answer is yes: the land next door is nobody's. Inside the
+        colony it takes a district that feeds another mouth. The
+        estimated colony size is only a ceiling, and one for the
+        machine rather than for the game: every wesen costs the
+        simulation time."""
+        cls = type(self)
+        cells = self.district()
+        if self.colonySize() >= cls.MAX_COLONY:
+            return False
+        if not self.neighbours:
+            return True
+        return cells >= cls.CELLS_PER_WESEN
 
     def freeSite(self):
         """a known, live cell away from every other wesen's anchor"""
@@ -875,13 +930,14 @@ class WesenSource(DefaultWesenSource):
             return
         old = self.age() >= self.maxAge - cls.OLD_AGE_MARGIN
         order = None
-        if old and self.colonySize() >= self.populationTarget():
+        room = self.roomForAnother()
+        if old and not room:
             # reproducing resets my age; the child is only there to
             # give everything back, so the colony does not double
             # every maxage turns whatever the pasture says
             order = {"sacrifice": self.id()}
         elif not old:
-            if self.colonySize() >= self.populationTarget():
+            if not room:
                 return
             reserve = self.reserve()
             if self.energy() < 2 * reserve + self.birthCost():
