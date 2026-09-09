@@ -3,8 +3,12 @@
 import numpy as np
 
 import json
+import traceback
 
-from .defaults import DEFAULT_GAME_STATE_FILE
+from . import isolation
+from .biome import Biome
+from .climate import Climate
+from .defaults import CONFIG_DEFAULTS, DEFAULT_GAME_STATE_FILE
 from .objects.food import Food
 from .objects.wesen import RuleException, Wesen
 
@@ -33,15 +37,32 @@ class World:
         # copy everything that will be modified
         self.infoAllWorld = infoAllWorld.copy()
         self.infoAllWorld.update({
-            k: infoAllWorld[k].copy() 
+            k: infoAllWorld[k].copy()
             for k in ("wesen", "world", "food")
         })
+        # config files written before seasons or biomes existed have
+        # neither section
+        for section in ("climate", "biome"):
+            self.infoAllWorld[section] = dict(
+                CONFIG_DEFAULTS[section],
+                **infoAllWorld.get(section, {}),
+            )
         self.objects = {}
         self.turns = infoAllWorld.get("turns", 0)
         self.stats = {}
+        # source name -> number of turns that ended in an error, and the
+        # error messages already reported (see noteFault)
+        self.faults = {}
+        self.reported = set()
+        self.sharedState = self.infoAllWorld["wesen"].get(
+            "shared_state", isolation.DEFAULT_MODE
+        )
         length = infoAllWorld["world"]["length"]
-        self.map = np.empty((length, length), dtype=object)
-        self.map.flat = [{} for _ in range(length**2)]
+        # a plain list of lists, not a numpy object array: the map is
+        # only ever indexed one cell at a time, and double-indexing an
+        # object array is about three times slower than a nested list,
+        # which matters because the range iterators are the hot loop
+        self.map = [[{} for _ in range(length)] for _ in range(length)]
         # is initialized depending on sources in initStats()
         self.infoAllWorld["world"].update(
             {
@@ -55,6 +76,20 @@ class World:
         self.infoAllWorld["food"]["type"] = "food"
         self.infoAllWorld["wesen"]["type"] = "wesen"
         self.infoAllWorld["wesen"]["sources"].sort()
+        # the climate state dict is shared (never rebound), so food
+        # objects and AI sources always read the current season
+        self.climate = Climate(self.infoAllWorld["climate"])
+        self.infoAllWorld["world"]["climate"] = self.climate.state
+        # the terrain is derived from the game seed alone, so restoring
+        # a game rebuilds exactly the same map
+        self.biome = Biome(
+            self.infoAllWorld["biome"],
+            length,
+            self.infoAllWorld["world"].get("seed", 0),
+        )
+        self.infoAllWorld["world"]["fertility"] = self.biome.field
+        # sources may ask about a single cell, not read the whole map
+        self.infoAllWorld["world"]["Fertility"] = self.biome.at
 
     def setCallbacks(self, callbacks):
         """used by UI to manipulate the world
@@ -71,17 +106,21 @@ class World:
                 temp = self.infoAllWorld["wesen"].copy()
                 temp["source"] = entry
                 self.AddObject(temp)
-        for _ in range(self.infoAllWorld["food"]["count"]):
-            self.AddObject(self.infoAllWorld["food"])
+        infoFood = self.infoAllWorld["food"]
+        for _ in range(infoFood["count"]):
+            food = self.AddObject(infoFood)
+            # random initial age, so the initial food does not all die
+            # of old age in the same turn
+            food.age = np.random.randint(0, infoFood["maxage"])
 
     def initStats(self):
         """resets self.stats to count and energy 0 for all object-types"""
         stats = {
-            "food": {"count": 0, "energy": 0},
-            "global": {"count": 0, "energy": 0},
+            "food": {"count": 0, "energy": 0, "upkeep": 0},
+            "global": {"count": 0, "energy": 0, "upkeep": 0},
         }
         for source in self.infoAllWorld["wesen"]["sources"]:
-            stats[source] = {"count": 0, "energy": 0}
+            stats[source] = {"count": 0, "energy": 0, "upkeep": 0}
         self.stats = stats
 
     def DeleteObject(self, objectid):
@@ -124,6 +163,83 @@ class World:
         self.map[newPos[0]][newPos[1]][_id] = self.objects[_id]
         self.callbacks.get("UpdatePos", lambda _id, obj: None)(_id, obj)
 
+    def updateFoodField(self):
+        """precomputes, for every position, the sum of the energy of all
+        food within range.seed (maximum metric), as used by the "life"
+        food rule. Stored in infoAllWorld["world"]["foodfield"], where
+        Food objects find it. A no-op for the classic rule."""
+        if self.infoAllWorld["food"].get("rule", "classic") != "life":
+            self.infoAllWorld["world"]["foodfield"] = None
+            return
+        length = self.infoAllWorld["world"]["length"]
+        r = self.infoAllWorld["range"]["seed"]
+        grid = np.zeros((length, length))
+        for o in self.objects.values():
+            if o.objectType == "food":
+                grid[o.position[0], o.position[1]] += o.energy
+        # box sum via 2D prefix sums; pad by r+1 on the low side and r
+        # on the high side, so the box never leaves the array
+        padded = np.pad(grid, ((r + 1, r), (r + 1, r)))
+        s = padded.cumsum(0).cumsum(1)
+        field = (
+            s[2 * r + 1 :, 2 * r + 1 :]
+            - s[: -2 * r - 1, 2 * r + 1 :]
+            - s[2 * r + 1 :, : -2 * r - 1]
+            + s[: -2 * r - 1, : -2 * r - 1]
+        )
+        self.infoAllWorld["world"]["foodfield"] = field
+
+    def checkSharedState(self):
+        """A source's class attributes are its genes, not a notebook the
+        whole colony writes in (see isolation.py). The engine freezes
+        them and gives every wesen its own copy, but a name can always
+        be pointed at something new, so what is left is checked here
+        and reported once, like any other rule violation."""
+        if self.sharedState == "allow":
+            return
+        for source, name in isolation.audit():
+            counts = self.faults.setdefault(
+                source, {"rule": 0, "error": 0}
+            )
+            counts["rule"] += 1
+            print(
+                f"wesen: {source}: rule violation in turn {self.turns}: "
+                f"replaced the shared class attribute '{name}'. Class "
+                f"attributes are genetic information: they are the same "
+                f"for every wesen of a source and for the whole game. "
+                f"Use the instance for what a wesen learns, and Talk or "
+                f"Broadcast for what it wants to pass on."
+            )
+
+    def noteFault(self, obj, exc, rule):
+        """One object's turn raised. A buggy AI source must not end the
+        game for everybody, so the turn is skipped and counted; the first
+        occurrence of each distinct error is printed in full, and rule
+        violations are counted separately because they are the source
+        breaking a game rule rather than crashing."""
+        source = getattr(obj, "source", "?")
+        kind = "rule violation" if rule else "error"
+        counts = self.faults.setdefault(
+            source, {"rule": 0, "error": 0}
+        )
+        counts["rule" if rule else "error"] += 1
+        key = (source, kind, str(exc))
+        if key in self.reported:
+            return
+        self.reported.add(key)
+        print(f"wesen: {source}: {kind} in turn {self.turns}: {exc}")
+        if not rule:
+            print(traceback.format_exc())
+        print(f"wesen: {source} keeps playing, this turn was skipped.")
+
+    def climateState(self):
+        """the current season, for the GUI (see climate.py)"""
+        return self.climate.state
+
+    def fertilityMap(self):
+        """the terrain, for the GUI (see biome.py); None when off"""
+        return self.biome.field
+
     def getDescriptor(self):
         """returns a list of descriptive information for the GUI"""
         return [o.getDescriptor() for o in self.objects.values()]
@@ -144,6 +260,9 @@ class World:
             "world": self.infoAllWorld[
                 "world"
             ].copy(),  # need to copy, since we are modifying it
+            "climate": self.infoAllWorld["climate"],
+            "climatestate": self.climate.persist(),
+            "biome": self.infoAllWorld["biome"],
             "wesen": self.infoAllWorld["wesen"],
             "range": self.infoAllWorld["range"],
             "time": self.infoAllWorld["time"],
@@ -157,10 +276,17 @@ class World:
         d["world"].pop("AddObject", None)
         d["world"].pop("objects", None)
         d["world"].pop("UpdatePos", None)
+        d["world"].pop("foodfield", None)
+        d["world"].pop("climate", None)
+        d["world"].pop("fertility", None)
+        d["world"].pop("Fertility", None)
         return d
 
     def restore(self, obj):
         """restores the state of the world represented by obj"""
+        if "climatestate" in obj:
+            self.climate.restore(obj["climatestate"])
+            self.climate.step(self.turns)
         self.objects = {}
         for infoObj in obj["objects"]:
             newObj = self.AddObject(infoObj)
@@ -183,24 +309,42 @@ class World:
         self.turns += 1
         self.initStats()
         stats = self.stats
+        self.climate.step(self.turns)
+        self.updateFoodField()
+        if self.turns % 50 == 0:
+            self.checkSharedState()
         # in the following, the self.objects.copy() is inevitable,
         # as the o.main() might modify self.objects.
         for o in self.objects.copy().values():
             if o.objectType == "wesen":
-                stats[o.source]["count"] += 1
-                stats[o.source]["energy"] += o.energy
+                # a restored game may hold wesen of a source that is not
+                # in this config's list, so the entry is made on demand
+                counts = stats.setdefault(
+                    o.source, {"count": 0, "energy": 0, "upkeep": 0}
+                )
+                counts["count"] += 1
+                counts["energy"] += o.energy
+                counts["upkeep"] += o.lastUpkeep
                 # stillActive = True;
             else:
                 stats["food"]["count"] += 1
                 stats["food"]["energy"] += o.energy
             try:
                 o.main()
-            except RuleException:
-                pass  # TODO: make offending source loose
+            except RuleException as exc:
+                # the source broke a rule of the game (see wesen.py)
+                self.noteFault(o, exc, rule=True)
+            except Exception as exc:  # noqa: BLE001
+                # the source (or the engine) has a bug: skip its turn,
+                # never end the game for the other players
+                self.noteFault(o, exc, rule=False)
         stats["global"] = {
             "count": len(self.objects),
             "energy": sum(
                 objectType["energy"] for objectType in stats.values()
+            ),
+            "upkeep": sum(
+                objectType["upkeep"] for objectType in stats.values()
             ),
         }
         self.stats = stats

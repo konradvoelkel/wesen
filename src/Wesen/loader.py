@@ -64,6 +64,10 @@ def Loader(run_immediately=True):
     wesend = Wesend(config)
     if run_immediately:
         wesend.start()
+        # the console script exits with whatever this returns, and
+        # sys.exit(anything but None or an int) prints it and fails, so
+        # a game that ran to its end must return nothing
+        return None
     return wesend
 
 

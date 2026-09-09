@@ -37,10 +37,13 @@ class WesenSource(DefaultWesenSource):
                         ],
                     )
         helper.recoverAge(self)
-        lookRange = self.closerLook()
-        # could be done in-loop...
         # action loop
         while self.time() > self.minimalTime:
+            timeBefore = self.time()
+            # Look around again every time round: our own eating and
+            # fighting invalidates ids from an earlier look, and acting
+            # on those is a rule violation ("non-existing food").
+            lookRange = self.closerLook()
             # try to finish something that already started:
             if self.targetType == "food":
                 helper.lookForFoodTarget(self, lookRange)
@@ -89,3 +92,7 @@ class WesenSource(DefaultWesenSource):
                                         for c in __class__.globalScanVector
                                     ],
                                 )
+            if self.time() == timeBefore:
+                # nothing above cost any time (e.g. a scan vector that
+                # rounds to no move): a second pass would loop forever
+                break

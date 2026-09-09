@@ -47,9 +47,18 @@ class Text(GuiObject):
         p = self.printer
         p.Print("paused" if self.gui.pause else "running")
         p.Print(
-            "\n\n\n%3.1f fps,  %8d turns\n\n"
+            "\n\n\n%3.1f fps,  %8d turns\n"
             % (self.gui.fps, self.world.turns)
         )
+        climate = self.world.climateState()
+        if climate.get("enable"):
+            p.Print(
+                "{},  food growth {:3.2f}\n\n".format(
+                    climate["season"], climate["growth"]
+                )
+            )
+        else:
+            p.Print("\n")
         # p.Print("manual slowdown: %3d percent" %
         # (int(100.0/self.gui.speed)));
 

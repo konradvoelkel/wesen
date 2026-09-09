@@ -7,6 +7,8 @@ as this code only adds features on top:
 * world manipulation
 """
 
+import traceback
+
 from OpenGL.GL import GL_RGB, GL_UNSIGNED_BYTE, glReadPixels
 from OpenGL.GLU import GLubyte
 from OpenGL.GLUT import (
@@ -15,6 +17,8 @@ from OpenGL.GLUT import (
     glutAttachMenu,
     glutCreateMenu,
 )
+from os.path import abspath
+
 from PIL import Image
 
 from .basicgui import BasicGUI
@@ -78,20 +82,16 @@ class GUI(BasicGUI):
 
     def HandleAction(self, action):
         """handles actions from the popup-menu"""
-        if action == 55:
-            line = "".join(
-                [
-                    f"'{key}' {self.keyExplanation[key]}\n"
-                    for key in sorted(self.keyExplanation.keys())
-                ]
-            )
-            self.text.Print(line)
-        elif action == 100:
-            self.Pause()
-        else:
-            raise NotImplementedError(
-                f"unknown action from popup-menu ({action})"
-            )
+        try:
+            if action == 55:
+                self.ShowKeys()
+            elif action == 100:
+                self.Pause()
+            else:
+                print("wesen: unknown popup-menu action", action)
+        except Exception:
+            print("wesen: popup-menu action failed:")
+            print(traceback.format_exc())
         return 0
 
     def initKeyBindings(self):
@@ -101,6 +101,7 @@ class GUI(BasicGUI):
         self.keybindings.update(
             {
                 b"m": self.ToggleMovie,
+                b"c": self.SaveScreenshot,
                 # now following left,up,right,down keys:
                 100: lambda: self.ModifyFood("delete"),
                 101: lambda: self.ModifyFood("increase"),
@@ -129,13 +130,30 @@ class GUI(BasicGUI):
     def ToggleMovie(self):
         """Toggle movie mode on/off. In movie mode, each frame is saved to disk."""
         self.movieMode = not self.movieMode
+        print("wesen: movie mode", "on" if self.movieMode else "off")
+
+    def SaveScreenshot(self):
+        """Save a screenshot of the map as wesen-<turn>.png"""
+        filename = "wesen-%08d.png" % self.world.turns
+        try:
+            self.takeScreenshot().save(filename)
+        except Exception:
+            print("wesen: could not save", filename)
+            print(traceback.format_exc())
+            return
+        print("wesen: wrote", abspath(filename))
 
     def HandleMouse(self, button, state, x, y):
         """handles all mouse events as clicks, dragdrops, etc."""
         BasicGUI.HandleMouse(self, button, state, x, y)
         if state == 1:
-            image = self.takeScreenshot()
-            image.save("screenshot.png")
+            # every click also refreshes screenshot.png (the one in the
+            # README); press "c" for a numbered shot that is kept
+            try:
+                self.takeScreenshot().save("screenshot.png")
+            except Exception:
+                print("wesen: could not save screenshot.png")
+                print(traceback.format_exc())
 
     def takeScreenshot(self):
         """takes a screenshot of the map region"""
@@ -157,4 +175,9 @@ class GUI(BasicGUI):
         """draws the actual descriptor"""
         BasicGUI.RenderScene(self)
         if self.movieMode:
-            self.takeScreenshot().save("m%08d.png" % (self.turns))
+            try:
+                self.takeScreenshot().save("m%08d.png" % self.world.turns)
+            except Exception:
+                print("wesen: movie frame failed, movie mode off:")
+                print(traceback.format_exc())
+                self.movieMode = False

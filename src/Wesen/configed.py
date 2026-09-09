@@ -22,6 +22,7 @@ else:  # up to date version
     from configparser import ConfigParser as SafeConfigParser
 
 import os.path
+from configparser import NoOptionError, NoSectionError
 
 
 class ConfigEd:
@@ -69,14 +70,18 @@ class ConfigEd:
         """depending on entryType,
         calls the appropriate getter from self.configParser"""
         value = None
-        if entryType == str:
-            value = self.configParser.get(section, key)
-        elif entryType == int:
-            value = self.configParser.getint(section, key)
-        elif entryType == bool:
-            value = self.configParser.getboolean(section, key)
-        elif entryType == float:
-            value = self.configParser.getfloat(section, key)
+        try:
+            if entryType == str:
+                value = self.configParser.get(section, key)
+            elif entryType == int:
+                value = self.configParser.getint(section, key)
+            elif entryType == bool:
+                value = self.configParser.getboolean(section, key)
+            elif entryType == float:
+                value = self.configParser.getfloat(section, key)
+        except (NoOptionError, NoSectionError):
+            # option added after the config file was written
+            value = None
         if value is None:
             value = CONFIG_DEFAULTS[section][key]
         return value

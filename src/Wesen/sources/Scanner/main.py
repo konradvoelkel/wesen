@@ -16,8 +16,12 @@ class WesenSource(DefaultWesenSource):
         return "<Ordinary Scanner>"
 
     def Scanner(self):
-        for o in self.look():
-            if o["type"] == "food" and o["position"] == self.position():
+        for o in self.closerLook():
+            if (
+                o["type"] == "food"
+                and o["position"] == self.position()
+                and self.foodWanted(o)
+            ):
                 self.Eat(o["id"])
         if self.movecount >= self.worldlength:
             self.Move([1, 1])

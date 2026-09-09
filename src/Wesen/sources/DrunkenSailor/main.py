@@ -22,7 +22,9 @@ class WesenSource(DefaultWesenSource):
             edible = [
                 o
                 for o in self.closerLook()
-                if o["type"] == "food" and o["position"] == self.position
+                if o["type"] == "food"
+                and o["position"] == self.position()
+                and self.foodWanted(o)
             ]
             if edible:
                 self.Eat(edible[0]["id"])

@@ -15,7 +15,7 @@ class WesenSource(DefaultWesenSource):
             else:
                 lookRange = self.closerLook()
                 for o in lookRange:
-                    if o["type"] == "food":
+                    if o["type"] == "food" and self.foodWanted(o):
                         if self.MoveToPosition(o["position"]):
                             self.Eat(o["id"])
                 self.normal = False

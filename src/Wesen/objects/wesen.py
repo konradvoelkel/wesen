@@ -2,7 +2,8 @@
 
 import importlib
 
-from .base import WorldObject
+from ..isolation import DEFAULT_MODE, prepare, readOnly, sealed
+from .base import WorldObject, stochasticRound
 
 
 class RuleException(Exception):
@@ -24,16 +25,27 @@ class Wesen(WorldObject):
         """imports the sourcecode of WesenSource and links the capabilities."""
         WorldObject.__init__(self, infoAllObject)
         self.infoTime = infoAllObject["time"]
+        self.infoFood = infoAllObject["food"]
         self.source = self.infoObject["source"]
+        self.lastUpkeep = 0
         # TODO one can probably avoid multiple imports (if not already)
         WesenSource = importlib.import_module(
             "..sources." + self.source + ".main", __package__
         ).WesenSource
+        # class attributes are genetic information, not a shared brain:
+        # see isolation.py and [wesen] shared_state
+        self.sharedState = self.infoObject.get(
+            "shared_state", DEFAULT_MODE
+        )
+        WesenSource = prepare(WesenSource, self.sharedState)
         infoSource = {"source": self.source}
         infoSourceWorld = self.infoWorld.copy()
         del infoSourceWorld["objects"]
         del infoSourceWorld["AddObject"]
         del infoSourceWorld["DeleteObject"]
+        infoSourceWorld.pop("foodfield", None)
+        # a source may ask about a cell, not read the whole terrain
+        infoSourceWorld.pop("fertility", None)
         infoAllSource = {
             "world": infoSourceWorld,
             "source": infoSource,
@@ -42,6 +54,19 @@ class Wesen(WorldObject):
             "wesen": self.infoObject,
             "food": infoAllObject["food"],
         }
+        if self.sharedState != "allow":
+            # the rules, the season and the terrain are the engine's,
+            # and every wesen in the game reads the same dicts: a source
+            # may read them, and may not use them as a letterbox. The
+            # views stay live, so the climate still changes under them
+            infoAllSource["world"] = {
+                key: readOnly(value)
+                for key, value in infoSourceWorld.items()
+            }
+            infoAllSource = {
+                key: readOnly(value)
+                for key, value in infoAllSource.items()
+            }
         self.wesenSource = WesenSource(infoAllSource)
         self.Receive = None
         self.PutInterface(self.wesenSource)
@@ -72,8 +97,11 @@ class Wesen(WorldObject):
     # small capabilites, no time cost
 
     def getTime(self):
-        """returns time left to do stuff (for free)"""
-        return self.time
+        """returns time left to do stuff (for free).
+        A dead wesen has no time, so that source code looping
+        "while self.time() > x" terminates when the wesen dies
+        mid-turn (e.g. by vomiting or attacking with too little energy)."""
+        return 0 if self.dead else self.time
 
     def getEnergy(self):
         """returns energy left (for free)"""
@@ -197,10 +225,14 @@ class Wesen(WorldObject):
     def Talk(self, wesenid, message):
         """calls Receive(message) in the wesen specified by wesenid when in range."""
         if self._UseTime("talk"):
-            for oid, o in self.getRangeIterator(
+            message = self._sealed(message)
+            # the condition gets the candidate object, and only that:
+            # closing over the loop variables of the loop below made
+            # this raise NameError on the first candidate in range
+            for _, o in self.getRangeIterator(
                 self.infoRange["look"],
                 condition=lambda x: (
-                    (oid == wesenid) and (o.objectType == "wesen")
+                    (id(x) == wesenid) and (x.objectType == "wesen")
                 ),
             ):
                 o.wesenSource.Receive(message)
@@ -216,7 +248,8 @@ class Wesen(WorldObject):
         o = self.worldObjects[foodid]
         if (o.position == self.position) and (o.objectType == "food"):
             if self._UseTime("eat"):
-                self.energy += o.getEaten()
+                # bite 0 means: eat the whole food at once
+                self.energy += o.getEaten(self.infoFood.get("bite", 0))
                 return True
         else:
             if o.position != self.position:
@@ -230,19 +263,26 @@ class Wesen(WorldObject):
         return False
 
     def Reproduce(self):
-        """Create a new Wesen instance with the same source and the specified energy
-        which is then subtracted from the reproducing wesen.
+        """Create a new Wesen instance with the same source and half of
+        the remaining energy, which is then subtracted from the
+        reproducing wesen. reproduce_cost energy is destroyed by the
+        birth, and a birth that would leave the child below
+        child_min_energy fails (without costing time).
         """
         if self.dead:
             return False
+        cost = self.infoObject.get("reproduce_cost", 0)
+        minChild = max(1, self.infoObject.get("child_min_energy", 1))
+        childEnergy = (self.energy - cost) // 2
+        if childEnergy < minChild:
+            return False
         if self._UseTime("reproduce"):
-            childEnergy = self.energy // 2
             infoWesen = self.infoObject.copy()
             infoWesen["energy"] = childEnergy
             infoWesen["source"] = self.source
             infoWesen["position"] = self.position
             child = self.AddObject(infoWesen)
-            self.energy -= childEnergy
+            self.energy -= childEnergy + cost
             self.age = 0
             self._EnergyCheck()
             return id(child)
@@ -264,14 +304,16 @@ class Wesen(WorldObject):
             )
         if (o.objectType == "wesen") and (o.position == self.position):
             if self._UseTime("attack"):
-                self.energy -= int(o.getAttacked(self.energy) * 0.5)
+                cost = self.infoObject.get("attack_cost", 0.5)
+                self.energy -= int(o.getAttacked(self.energy) * cost)
                 return not self._EnergyCheck()
         return False
 
     def getAttacked(self, energy):
         """called when this Wesen is attacked"""
         previousEnergy = self.energy
-        self.energy -= int(energy * 0.75)
+        damage = self.infoObject.get("attack_damage", 0.75)
+        self.energy -= int(energy * damage)
         self._EnergyCheck()
         return previousEnergy
 
@@ -289,16 +331,31 @@ class Wesen(WorldObject):
                 if deathOnLowEnergy:
                     self.Die()
             if not energy <= 0:
-                # TODO the magic numbers here should be configurable
-                infoFood = {
-                    "energy": energy,
-                    "position": self.position,
-                    "growrate": 1,
-                    "seedrate": 0.001,
-                    "maxamount": energy + 1000,
-                    "maxage": 1000,
-                    "type": "food",
-                }
+                if self.infoFood.get("rule", "classic") == "life":
+                    # vomited food is ordinary food: it obeys the same
+                    # density rules as everything else, so vomiting is
+                    # planting, not free energy
+                    infoFood = dict(self.infoFood)
+                    infoFood.pop("count", None)
+                    infoFood.update(
+                        {"energy": energy, "position": self.position}
+                    )
+                    # a blob bigger than maxamount (a dead body) neither
+                    # shrinks nor grows: it lies there until eaten
+                    infoFood["maxamount"] = max(
+                        infoFood["maxamount"], energy
+                    )
+                else:
+                    # TODO the magic numbers here should be configurable
+                    infoFood = {
+                        "energy": energy,
+                        "position": self.position,
+                        "growrate": 1,
+                        "seedrate": 0.001,
+                        "maxamount": energy + 1000,
+                        "maxage": 1000,
+                        "type": "food",
+                    }
                 self.AddObject(infoFood)
                 self.energy -= energy
                 return True
@@ -308,7 +365,12 @@ class Wesen(WorldObject):
         """transfer energy from this wesen to another specified by wesenid"""
         if self.dead:
             return False
-        o = self.worldObjects[wesenid]
+        try:
+            o = self.worldObjects[wesenid]
+        except (KeyError, TypeError):
+            raise RuleException(
+                f"May not donate to non-existent wesen with id '{wesenid}'"
+            )
         if (o.objectType == "wesen") and (o.position == self.position):
             if self._UseTime("donate"):
                 if energy > self.energy:
@@ -325,6 +387,8 @@ class Wesen(WorldObject):
         if self.dead:
             return False
         if self._UseTime("broadcast"):
+            # once, not once per listener
+            message = self._sealed(message)
             for _, o in self.getRangeIterator(
                 self.infoRange["talk"],
                 condition=lambda x: self != x and x.objectType == "wesen",
@@ -332,6 +396,17 @@ class Wesen(WorldObject):
                 o.Receive(message)
             return True
         return False
+
+    def _sealed(self, message):
+        """what a message may carry: a value, not a handle.
+
+        Handing another wesen a mutable object would be a shared brain
+        with extra steps - both sides would go on reading and writing
+        the same dict - so unless the rules allow shared state, what is
+        delivered is a frozen copy (see isolation.deepFreeze)."""
+        if self.sharedState == "allow":
+            return message
+        return sealed(message)
 
     def Die(self):
         if self.energy:
@@ -392,11 +467,23 @@ class Wesen(WorldObject):
             return True
         return False
 
+    def upkeep(self):
+        """energy burnt this turn: a flat base plus a share of the own
+        energy. Holding a big body therefore costs, which limits both
+        hoarding and unchecked population growth."""
+        info = self.infoObject
+        return info.get("upkeep", 1) + info.get(
+            "upkeep_rate", 0.0
+        ) * max(0, self.energy)
+
     def main(self):
         """runs one turn of wesen code and it's AI code"""
         WorldObject.main(self)
         if not self.dead:
-            self.energy -= 1
+            self.lastUpkeep = stochasticRound(self.upkeep())
+            self.energy -= self.lastUpkeep
+            if self._EnergyCheck():
+                return
             self.time = min(
                 self.time + self.infoTime["init"], self.infoTime["max"]
             )

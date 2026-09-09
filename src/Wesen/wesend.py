@@ -8,7 +8,9 @@ import json
 from os.path import exists
 from pprint import pprint
 
-from .defaults import DEFAULT_GAME_STATE_FILE
+from .defaults import CONFIG_DEFAULTS, DEFAULT_GAME_STATE_FILE
+from .isolation import sharing
+from .variation import applySeed, applyVariation
 from .world import World
 
 # TODO change the name of this class (it is not a daemon)
@@ -24,13 +26,35 @@ class Wesend:
     def __init__(self, config):
         """config should be a dictionary (see loader.py),
         extraArgs are all passed to OpenGL"""
+        resume = config.pop("resume", False) and exists(
+            DEFAULT_GAME_STATE_FILE
+        )
+        savedState = None
+        if resume:
+            with open(DEFAULT_GAME_STATE_FILE) as f:
+                savedState = json.loads(f.read())
+            # a resumed game keeps the seed and the varied rules it was
+            # started with, so it replays identically
+            config["world"]["seed"] = savedState.get("world", {}).get(
+                "seed", config["world"].get("seed", 0)
+            )
+            applySeed(config)
+        else:
+            applySeed(config)
+            applyVariation(config)
         self.infoGui = config["gui"]
         self.infoWorld = config["world"]
         self.infoWesen = config["wesen"]
         self.infoFood = config["food"]
         self.infoRange = config["range"]
         self.infoTime = config["time"]
-        self.infoWesen["sources"] = self.infoWesen["sources"].split(",")
+        self.infoClimate = dict(
+            CONFIG_DEFAULTS["climate"], **config.get("climate", {})
+        )
+        if isinstance(self.infoWesen["sources"], str):
+            self.infoWesen["sources"] = self.infoWesen[
+                "sources"
+            ].split(",")
         self.infoWorld["Debug"] = self.Debug
         infoAllWorld = {
             "world": self.infoWorld,
@@ -38,16 +62,31 @@ class Wesend:
             "food": self.infoFood,
             "range": self.infoRange,
             "time": self.infoTime,
+            "climate": self.infoClimate,
         }
-        if config.pop("resume", False) and exists(DEFAULT_GAME_STATE_FILE):
-            with open(DEFAULT_GAME_STATE_FILE) as f:
-                string = f.read()
-                d = json.loads(string)
-                infoAllWorld.update(d)
-                self.world = World(infoAllWorld, False)
-                self.world.restore(infoAllWorld)
+        if savedState is not None:
+            infoAllWorld.update(savedState)
+            infoAllWorld["world"]["Debug"] = self.Debug
+            self.world = World(infoAllWorld, False)
+            self.world.restore(infoAllWorld)
         else:
             self.world = World(infoAllWorld)
+        self.reportSharedState()
+
+    def reportSharedState(self):
+        """say which sources keep state on their class, and what the
+        engine did about it (see isolation.py). Silent when there is
+        nothing to say or when the rule is switched off."""
+        if self.infoWesen.get("shared_state", "isolate") == "allow":
+            return
+        for source, names in sorted(sharing().items()):
+            print(
+                f"wesen: {source} keeps state on its class "
+                f"({', '.join(names)}); every wesen was given its own "
+                f"copy. Class attributes are genetic information, the "
+                f"same for every wesen and for the whole game - see "
+                f"[wesen] shared_state."
+            )
 
     def start(self, extraArgs=""):
         """starts the simulation (with GUI, if configured)"""

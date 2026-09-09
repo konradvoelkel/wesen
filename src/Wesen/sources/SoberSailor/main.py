@@ -29,7 +29,9 @@ class WesenSource(DefaultWesenSource):
 
             foodHere = [
                 obj for obj in lookRange
-                if obj["type"] == "food" and obj["position"] == self.position
+                if obj["type"] == "food"
+                and obj["position"] == self.position()
+                and self.foodWanted(obj)
             ]
 
             if foodHere:
@@ -38,14 +40,14 @@ class WesenSource(DefaultWesenSource):
 
             foods = [
                 obj for obj in lookRange
-                if obj["type"] == "food"
+                if obj["type"] == "food" and self.foodWanted(obj)
             ]
 
             if foods:
                 # Nimm das erste Food, was auf dem Weg ist
                 food = foods[0]
-                dx = food["position"][0] - self.position[0]
-                dy = food["position"][1] - self.position[1]
+                dx = food["position"][0] - self.position()[0]
+                dy = food["position"][1] - self.position()[1]
 
                 # Immer geradeaus laufen
                 if abs(dx) > abs(dy):

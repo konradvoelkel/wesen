@@ -1,6 +1,17 @@
 """model and controller for single objects in the simulation"""
 
+from numpy.random import uniform
+
 from ..point import getRandomPosition
+
+
+def stochasticRound(x):
+    """rounds x to an int, with the fractional part deciding the
+    probability of rounding up, so the expected value is preserved.
+    Used wherever a rate smaller than one energy per turn has to be
+    applied to integer energies (food growth, wesen upkeep)."""
+    base = int(x // 1)
+    return base + (1 if uniform(0, 1) < (x - base) else 0)
 
 
 class WorldObject:

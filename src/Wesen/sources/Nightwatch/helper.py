@@ -15,7 +15,9 @@ def DrunkenSailor(self):
 def recoverAge(self):
     if self.age() + 5 > self.infoWesen["maxage"]:
         child = self.Reproduce()
-        self.Donate(self.energy(), child)
+        # Reproduce fails when there is too little energy for a child
+        if child:
+            self.Donate(self.energy(), child)
 
 
 def CatchTarget(self, Action, actionTime):
@@ -74,16 +76,19 @@ def lookForTarget(
 
 
 def acceptableFood(self, o):
-    if o["energy"] >= self.minimumEnergyToEat:
-        if o["id"] in self.forbiddenTargets:
-            del self.forbiddenTargets[self.forbiddenTargets.index(o["id"])]
-        return True
-    else:
-        return False
+    """ripe food; when below fighting energy also bites that leave the
+    food alive; when starving anything above minimumEnergyToEat"""
+    ok = self.foodWanted(
+        o, hungry=self.minimumEnergyToFight, starving=50
+    ) and self.foodYield(o) >= self.minimumEnergyToEat
+    if ok and o["id"] in self.forbiddenTargets:
+        del self.forbiddenTargets[self.forbiddenTargets.index(o["id"])]
+    return ok
 
 
 def foodFitness(a):
-    return a["energy"]
+    # sorted ascending, so the richest food comes first
+    return -a["energy"]
 
 
 def acceptableEnemy(self, o):

@@ -15,10 +15,14 @@ from OpenGL.GL import (
     GL_FLOAT,
     GL_TRIANGLES,
     GL_VERTEX_ARRAY,
+    glColor3f,
     glColorPointer,
     glDisableClientState,
     glDrawArrays,
     glEnableClientState,
+    glPopMatrix,
+    glPushMatrix,
+    glRectf,
     glScale,
     glTranslatef,
     glVertexPointer,
@@ -30,9 +34,14 @@ from .object import GuiObject
 class Map(GuiObject):
     """A Map() object plots the descriptor data onto a 2d-grid."""
 
-    def __init__(self, gui, infoWorld, sourceList, colorList):
+    TERRAIN_TILES = 24  # resolution the fertility map is drawn at
+
+    def __init__(
+        self, gui, infoWorld, sourceList, colorList, fertility=None
+    ):
         GuiObject.__init__(self, gui)
         self.worldLength = infoWorld["length"]
+        self._terrain = self._BuildTerrain(fertility)
         self.colorDescriptor = {
             wesenSource: color
             for (wesenSource, color) in zip(sourceList, colorList)
@@ -176,6 +185,53 @@ class Map(GuiObject):
             return
         self._dirty_objects[_id] = obj
 
+    def _BuildTerrain(self, fertility):
+        """the fertility map (see biome.py) as a list of coloured tiles
+        in world coordinates. Built once: the terrain never changes."""
+        if fertility is None:
+            return []
+        length = self.worldLength
+        tiles = min(type(self).TERRAIN_TILES, length)
+        low = float(fertility.min())
+        span = float(fertility.max()) - low
+        if span <= 0:
+            return []
+        edges = [round(i * length / tiles) for i in range(tiles + 1)]
+        terrain = []
+        for i in range(tiles):
+            x0, x1 = edges[i], edges[i + 1]
+            for j in range(tiles):
+                y0, y1 = edges[j], edges[j + 1]
+                value = (
+                    float(fertility[x0:x1, y0:y1].mean()) - low
+                ) / span
+                # dark green ground on the near-black background, kept
+                # far below the brightness of the food drawn on top
+                terrain.append(
+                    (
+                        x0,
+                        y0 - 1,
+                        x1,
+                        y1 - 1,
+                        0.02 + 0.03 * value,
+                        0.05 + 0.13 * value,
+                        0.02 + 0.03 * value,
+                    )
+                )
+        return terrain
+
+    def _DrawTerrain(self, frame, scaleFactor):
+        """draws the fertility map underneath the objects"""
+        if not self._terrain:
+            return
+        glPushMatrix()
+        glTranslatef(frame, 2 * frame, 0.0)
+        glScale(scaleFactor, scaleFactor, 1.0)
+        for x0, y0, x1, y1, red, green, blue in self._terrain:
+            glColor3f(red, green, blue)
+            glRectf(x0, y0, x1, y1)
+        glPopMatrix()
+
     def Draw(self, descriptor=[]):
         """Draws a map with all objects in the world,
         according to the descriptor."""
@@ -186,6 +242,7 @@ class Map(GuiObject):
         # moving away from the frame
         blockSize = (1 - 2 * frame) / self.worldLength
         scaleFactor = blockSize
+        self._DrawTerrain(frame, scaleFactor)
         # data = narray(reduce(lambda a,b: a + b,
         # 		     map(self.__descToArray,
         # 			 descriptor)),

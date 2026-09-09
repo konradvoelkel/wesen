@@ -14,7 +14,9 @@ def DrunkenSailor(self):
 def recoverAge(self):
     if self.age() + 5 > self.infoWesen["maxage"]:
         child = self.Reproduce()
-        self.Donate(self.energy(), child)
+        # Reproduce fails when there is too little energy for a child
+        if child:
+            self.Donate(self.energy(), child)
 
 
 def CatchTarget(self, Action, actionTime):
@@ -76,12 +78,16 @@ def lookForTarget(
 
 
 def acceptableFood(self, o):
-    if o["age"] >= self.minimalGardenAge:
-        if o["id"] in self.forbiddenTargets:
-            del self.forbiddenTargets[self.forbiddenTargets.index(o["id"])]
-        return True
+    if self.foodRule() == "life":
+        # graze: ripe food, bites when hungry, anything when starving
+        ok = self.foodWanted(
+            o, hungry=self.minimumEnergyToFight, starving=50
+        )
     else:
-        return False
+        ok = o["age"] >= self.minimalGardenAge
+    if ok and o["id"] in self.forbiddenTargets:
+        del self.forbiddenTargets[self.forbiddenTargets.index(o["id"])]
+    return ok
 
 
 def foodFitness(a):
@@ -135,6 +141,9 @@ def lookForThreat(self, lookRange=None):
 
 
 def lookAtYoungGarden(self, lookRange=None):
+    if self.foodRule() == "life":
+        # wild seeds are everywhere; waiting for them is no strategy
+        return False
     if not lookRange:
         lookRange = self.closerLook()
     foodCount = 0
@@ -181,8 +190,11 @@ def Flee(self):
 
 def seedOut(self):
     newFoodObjects = []
+    plant = self.plantEnergy()
     for i in range(0, 3):
-        newFoodObjects.append(self.Vomit(1))
+        if self.energy() <= 20 * plant:
+            break
+        newFoodObjects.append(self.Vomit(plant))
         for j in range(0, 4):
             DrunkenSailor(self)
     return newFoodObjects

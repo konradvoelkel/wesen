@@ -12,13 +12,15 @@ class WesenSource(DefaultWesenSource):
         return "<Great Rabbit, the Insatiable>"
 
     def main(self):
-        # devour everything in sight
-        visible = self.look()
+        # devour everything in sight - but ripe food first, so the
+        # pasture keeps growing (bites when hungry, anything when starving)
+        visible = self.closerLook()
         foods = [o for o in visible if o["type"] == "food"]
+        wanted = [f for f in foods if self.foodWanted(f)]
 
-        if foods:
+        if wanted:
             nearest = min(
-                foods,
+                wanted,
                 key=lambda f: max(
                     abs(f["position"][0] - self.position()[0]),
                     abs(f["position"][1] - self.position()[1]),
@@ -29,6 +31,7 @@ class WesenSource(DefaultWesenSource):
         else:
             self.Move([randint(-2, 3), randint(-2, 3)])
 
-        # multiply endlessly
-        if self.energy() > 150:
+        # multiply while the pasture is rich
+        ripe = sum(1 for f in foods if self.foodRipe(f))
+        if self.energy() > 150 and ripe >= 3:
             self.Reproduce()

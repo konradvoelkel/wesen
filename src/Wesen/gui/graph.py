@@ -30,6 +30,48 @@ def SENSORFCT_FROMSTATS_ENERGY(world):
     return lambda x: world.stats[x]["energy"]
 
 
+def SENSORFCT_FROMSTATS_COUNT(world):
+    return lambda x: world.stats[x]["count"]
+
+
+def SENSORFCT_FROMSTATS_UPKEEP(world):
+    return lambda x: world.stats[x].get("upkeep", 0)
+
+
+def SENSORFCT_CLIMATE(world):
+    return lambda _: world.climateState()["growth"]
+
+
+# What the graph can show. Every curve is scaled on its own unless a mode
+# says "shared", in which case the curves of that mode share one scale and
+# are therefore comparable with each other. Without this, total energy and
+# the food supply dwarf everything else and the plot says nothing.
+GRAPH_MODES = [
+    {
+        "name": "energy per source",
+        "groups": ("source-energy",),
+        "scale": "shared",
+    },
+    {
+        "name": "population per source",
+        "groups": ("source-count",),
+        "scale": "shared",
+    },
+    {
+        "name": "energy and population per source",
+        "groups": ("source-energy", "source-count"),
+        "scale": "own",
+    },
+    {
+        "name": "the world: food, season, upkeep",
+        "groups": ("world",),
+        "scale": "own",
+    },
+    {"name": "everything, own scale", "groups": None, "scale": "own"},
+    {"name": "everything, one scale", "groups": None, "scale": "shared"},
+]
+
+
 class Graph(GuiObject):
     """A Graph object plots curves for sensors.
     See AddSensor().
@@ -46,17 +88,37 @@ class Graph(GuiObject):
         # both sensors and history are set in AddSensor.
         self.printer = TextPrinter()
         self.resolution = 400
+        self.mode = 0
         self._AddDefaultSensors()
         self._AddObjectEnergySensors(sourceList, colorList)
 
     def _AddDefaultSensors(self):
-        """adds sensors: (global energy, food energy)"""
+        """adds the sensors that describe the world rather than a player"""
+        self.AddSensor(
+            {
+                "f": SENSORFCT_CLIMATE,
+                "statskey": None,
+                "color": [0.35, 0.35, 0.9],
+                "name": "season (food growth)",
+                "group": "world",
+            }
+        )
+        self.AddSensor(
+            {
+                "f": SENSORFCT_FROMSTATS_UPKEEP,
+                "statskey": "global",
+                "color": [0.8, 0.4, 0.1],
+                "name": "upkeep",
+                "group": "world",
+            }
+        )
         self.AddSensor(
             {
                 "f": SENSORFCT_FROMSTATS_ENERGY,
                 "statskey": "global",
                 "color": [0.5, 0.5, 0.5],
                 "name": "global energy",
+                "group": "world",
             }
         )
         self.AddSensor(
@@ -65,11 +127,21 @@ class Graph(GuiObject):
                 "statskey": "food",
                 "color": [0.0, 1.0, 0.0],
                 "name": "food energy",
+                "group": "world",
+            }
+        )
+        self.AddSensor(
+            {
+                "f": SENSORFCT_FROMSTATS_COUNT,
+                "statskey": "food",
+                "color": [0.0, 0.6, 0.3],
+                "name": "food count",
+                "group": "world",
             }
         )
 
     def _AddObjectEnergySensors(self, sourceList, colorList):
-        """adds a sensor for each source's energy."""
+        """adds an energy and a population sensor for each source."""
         for wesenSource, color in zip(sourceList, colorList):
             self.AddSensor(
                 {
@@ -77,8 +149,32 @@ class Graph(GuiObject):
                     "color": color,
                     "statskey": wesenSource,
                     "name": wesenSource + " energy",
+                    "group": "source-energy",
                 }
             )
+            self.AddSensor(
+                {
+                    "f": SENSORFCT_FROMSTATS_COUNT,
+                    "color": [min(1.0, c + 0.35) for c in color],
+                    "statskey": wesenSource,
+                    "name": wesenSource + " count",
+                    "group": "source-count",
+                }
+            )
+
+    def CycleMode(self, step=1):
+        """switch to the next set of curves (bound to a key)"""
+        self.mode = (self.mode + step) % len(GRAPH_MODES)
+        return GRAPH_MODES[self.mode]["name"]
+
+    def _visible(self):
+        """(sensor, data) pairs the current mode shows"""
+        groups = GRAPH_MODES[self.mode]["groups"]
+        return [
+            (sensor, data)
+            for sensor, data in zip(self.sensors, self.history)
+            if groups is None or sensor.get("group") in groups
+        ]
 
     def Reshape(self, x, y):
         GuiObject.Reshape(self, x, y)
@@ -97,37 +193,63 @@ class Graph(GuiObject):
     def Step(self):
         """adds current world.stats as data point to all sensors."""
         for sensorInfo, data in zip(self.sensors, self.history):
-            data.AddValue(
-                sensorInfo["f"](self.world)(sensorInfo["statskey"])
-            )
-        self.maxValue = max(
-            self.maxValue, max(data.maxValue for data in self.history)
-        )
+            try:
+                value = sensorInfo["f"](self.world)(
+                    sensorInfo["statskey"]
+                )
+            except Exception:
+                # a broken sensor must not stop the game
+                value = 0
+            data.AddValue(value)
 
     def DrawPlot(self):
-        """Plots the curves for all sensors in self.sensors"""
-        glPushMatrix()
-        # TODO the following is "moving away from frame",
-        # and should use the framedata (plastic, etc.)
-        # from the GuiObject base class.
-        # Probably this stuff should be done in GuiObject!
-        glTranslatef(0.005, 0.01, 0.0)
-        glScalef(0.99 / self.resolution, 0.7 / self.maxValue, 1.0)
-        for sensorInfo, data in zip(self.sensors, self.history):
+        """Plots the curves the current mode shows, each scaled so that
+        it fills the plot: a curve of tens and one of hundreds of
+        thousands are both readable, which is the whole point."""
+        visible = self._visible()
+        if not visible:
+            return
+        shared = GRAPH_MODES[self.mode]["scale"] == "shared"
+        peaks = [max(1e-9, data.windowMax()) for _, data in visible]
+        self.maxValue = max(peaks)
+        for (sensorInfo, data), peak in zip(visible, peaks):
+            reference = self.maxValue if shared else peak
+            glPushMatrix()
+            # TODO the following is "moving away from frame",
+            # and should use the framedata (plastic, etc.)
+            # from the GuiObject base class.
+            # Probably this stuff should be done in GuiObject!
+            glTranslatef(0.005, 0.01, 0.0)
+            glScalef(0.99 / self.resolution, 0.7 / reference, 1.0)
             glColor3f(*(sensorInfo["color"]))
             data.Draw()
-        glPopMatrix()
+            glPopMatrix()
 
     def DrawHint(self):
-        """Prints a caption for the plot"""
+        """Prints a caption for the plot: the mode, and every curve with
+        its current value (the curves have different scales, so the
+        numbers are the only way to compare them)"""
         p = self.printer
         p.ResetRaster()
-        for sensorInfo in self.sensors:
+        mode = GRAPH_MODES[self.mode]
+        glColor3f(0.85, 0.85, 0.85)
+        p.Print("\n")
+        p.Print(
+            "  [g] {} ({}/{})".format(
+                mode["name"], self.mode + 1, len(GRAPH_MODES)
+            )
+        )
+        scale = "one shared scale" if mode["scale"] == "shared" else (
+            "each curve on its own scale"
+        )
+        p.Print("\n")
+        p.Print(f"  {scale}")
+        for sensorInfo, data in self._visible():
             glColor3f(*sensorInfo["color"])
             # to make the color effective for text,
             # we have to call glRasterPos by printing a linebreak:
             p.Print("\n")
-            p.Print("  {}".format(sensorInfo["name"]))
+            p.Print(f"  {sensorInfo['name']}: {data.lastValue():g}")
 
     def Draw(self):
         GuiObject.Draw(self)
@@ -168,6 +290,24 @@ class _SensorData:
             self.previous_index * 2 + 1 : self.previous_index * 2 + 2
         ] = narray([value], "f")
         self.maxValue = max(self.maxValue, value)
+
+    def windowMax(self):
+        """largest value still visible in the plot. Unlike maxValue this
+        forgets old spikes, so a curve that once peaked does not stay
+        squashed against the bottom forever."""
+        values = self.buf[1::2]
+        if self.buffer_full:
+            return float(values.max())
+        if self.previous_index < 0:
+            return 0.0
+        return float(values[: self.previous_index + 1].max())
+
+    def lastValue(self):
+        """the most recent value, for the caption"""
+        if self.previous_index < 0:
+            return 0
+        value = float(self.buf[self.previous_index * 2 + 1])
+        return round(value, 2) if abs(value) < 100 else int(value)
 
     def Draw(self):
         """draw a curve of all previous data,

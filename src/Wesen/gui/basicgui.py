@@ -123,7 +123,11 @@ class BasicGUI:
             self, self.world, self.infoWesen["sources"], self.colorList
         )
         self.map = Map(
-            self, self.infoWorld, self.infoWesen["sources"], self.colorList
+            self,
+            self.infoWorld,
+            self.infoWesen["sources"],
+            self.colorList,
+            fertility=self.world.fertilityMap(),
         )
         self.world.setCallbacks(self.map.GetCallbacks())
         self.text = Text(self, self.world)
@@ -257,14 +261,41 @@ class BasicGUI:
             b"-": self.SpeedDown,
             b"+": self.SpeedUp,
             b"s": self.Step,
+            b"g": self.CycleGraph,
+            b"?": self.ShowKeys,
+            b"h": self.ShowKeys,
         }
         self._generateKeyExplanations()
+
+    def CycleGraph(self):
+        """Switch the graph to the next set of curves"""
+        name = self.graph.CycleMode()
+        print("graph:", name)
+
+    def ShowKeys(self):
+        """Show or hide this list of keys"""
+        if self.text.givenText:
+            self.text.Print(None)
+            return
+        self.text.Print(
+            "".join(
+                f"'{key}' {self.keyExplanation[key]}\n"
+                for key in sorted(self.keyExplanation.keys())
+            )
+        )
 
     def HandleKeys(self, key, x, y):
         """handle both usual (character) and special (ordinal) keys"""
         # print("key detection: key="+str(key)+" at (x,y)="+str(x)+","+str(y));
-        if key in self.keybindings:
-            self.keybindings[key]()
+        action = self.keybindings.get(key)
+        if action is None:
+            return
+        try:
+            action()
+        except Exception:
+            # a broken key binding must not end a running game
+            print("wesen: key", key, "failed:")
+            print(traceback.format_exc())
 
     def _win2glCoord(self, x, y):
         """converts window coordinates to OpenGL coordinates"""
@@ -340,12 +371,21 @@ class BasicGUI:
             return
         self.descriptor = self.GameLoop()
         self.graph.Step()
+        self.SafeRender()
+
+    def SafeRender(self):
+        """renders one frame; a drawing bug pauses the game instead of
+        ending it, so the state can still be saved and inspected"""
         try:
             self.RenderScene()
         except GLError as e:
-            print("exception:", e)
+            print("wesen: OpenGL error while drawing:", e)
             print(traceback.format_exc())
             sys.exit(1)
+        except Exception:
+            print("wesen: error while drawing, pausing:")
+            print(traceback.format_exc())
+            self.pause = False
 
     def Draw(self):
         """actualizes the descriptor by calling his GameLoop and renders it"""
