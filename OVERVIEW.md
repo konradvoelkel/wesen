@@ -22,6 +22,7 @@ pyproject.toml           # uv/setuptools, deps numpy, PyOpenGL, Pillow; script `
 src/Wesen/
   loader.py              # CLI args, config file lookup, checks sources, starts Wesend
   sourceloader.py        # where a player's source is looked for and loaded
+  tournament.py          # headless matches, scored over the whole game
   configed.py            # INI config reader/editor (~/.wesen/conf by default)
   defaults.py            # CONFIG_OPTIONS / CONFIG_DEFAULTS (all tunables)
   strings.py             # help strings + VERSIONSTRING (still says 0.6.0-alpha)
@@ -60,11 +61,16 @@ GUI keys: space pause, `s` single step (when paused), `+`/`-` speed,
 `q`/ESC quit, right click menu. The GUI starts *paused*. Left click
 saves screenshot.png.
 
-Headless tournament tool (in `local/`, not tracked):
+Headless tournament (`src/Wesen/tournament.py`, since 0.8):
 
 ```sh
-uv run python local/tournament.py --turns 3000 --sources Vetinari,Dwarf,Nightwatch,Rincewind,GreatRabbit --seed 1
+uv run wesen-tournament --turns 3000 --seeds 1,2,3 --sources Vetinari,Dwarf,Nightwatch,Rincewind,GreatRabbit
 ```
+
+Ranks by the area under each source's energy curve rather than by its
+energy at the final turn; `SOURCES.md` section 8 explains the columns.
+Runs on the game's own defaults without a config file. The older
+`local/tournament.py` is what it grew out of and is superseded by it.
 
 `local/tournament.conf` is a copy of `~/.wesen/conf` (identical to
 `defaults.py`) and can be passed to `wesen -c local/tournament.conf`.

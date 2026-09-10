@@ -44,6 +44,12 @@ uv run wesen -s MyWesen,Dwarf,Rincewind
 `-p DIR` adds another folder to look in. `SOURCES.md` is the guide: the
 whole API, the rules that matter, and what the existing sources do.
 
+To score a match without watching it:
+
+```sh
+uv run wesen-tournament --turns 2000 --seeds 1,2,3 -s MyWesen,Dwarf,Rincewind
+```
+
 
 Develop
 =====

@@ -12,6 +12,7 @@ dependencies = [
 
 [project.scripts]
 wesen = "Wesen.loader:Loader"
+wesen-tournament = "Wesen.tournament:main"
 
 [build-system]
 requires = ["setuptools>=61.0"]

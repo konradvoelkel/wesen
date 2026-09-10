@@ -10,8 +10,8 @@ uv sync                                   # once; needs freeglut3-dev for the GU
 uv run wesen -c local/tournament.conf     # GUI (starts PAUSED: press space)
 uv run wesen -c local/tournament.conf --disablegui   # headless, Ctrl+C stops
 uv run wesen -s MyWesen,Dwarf -p ~/my-wesen              # sources of your own
-uv run python local/tournament.py --turns 2000 --every 250 --seed 1 \
-    --sources Vetinari,Dwarf,Nightwatch,Rincewind,GreatRabbit          # headless with stats table
+uv run wesen-tournament --turns 2000 --seeds 1,2,3 \
+    --sources Vetinari,Dwarf,Nightwatch,Rincewind,GreatRabbit   # headless, scored
 uv run python -m unittest discover -s tests -t . -p '*.py'   # the whole suite
 uv run ruff check src/Wesen/sources/<Name>/ && uv run ruff format src/Wesen/sources/<Name>/
 ```
@@ -695,10 +695,27 @@ run the real GUI once (`local/gui_check.py`) before calling it done.
   range scan for `look()`/`closerLook()` and food growth; the map code
   is ~20 ms. `look()` is therefore taken every turn only on the move.
 
-## 8. Dev tools (non-versioned, `local/`)
+## 8. Scoring, and dev tools
 
-* `tournament.py` — headless runs, prints `count/energy` per source
-  (`--sources`, `--seed`, `--turns`, `--every`, `--json`, `--quiet`).
+`wesen-tournament` (`src/Wesen/tournament.py`) plays sources against each
+other headless and reports three numbers per source, because the one the
+GUI graph shows — energy held at the final turn — rewards whoever happens
+to be breeding when the game is stopped:
+
+| column | is |
+|---|---|
+| `mean` | the area under the energy curve divided by the length of the game: what the source held *on average*. This is what the ranking uses. |
+| `energy` | energy at the last turn — the old score. Printed as a second ranking whenever it disagrees with the first, since the disagreement is the interesting part. |
+| `alive` | share of the game the source had at least one wesen. |
+
+`--seeds 1,2,3` plays each seed and averages, with a `wins` column, so
+one lucky game cannot decide a match. `--json FILE` writes it all out.
+`-c FILE` uses a config file (the same one `wesen -c FILE` opens in the
+GUI); without one the game's own defaults are used. `-p DIR` and
+`-s A,B,C` work as they do for `wesen`.
+
+Non-versioned scripts in `local/`:
+
 * `profile_run.py TURNS SOURCES` — cProfile of the last 50 turns.
 * `persist_check.py` — persist→restore→persist round trip incl. a source.
 * `gui_check.py TURNS OUT.png` — runs the real GUI unattended, screenshot, exit.
