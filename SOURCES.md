@@ -707,6 +707,7 @@ to be breeding when the game is stopped:
 | `mean` | the area under the energy curve divided by the length of the game: what the source held *on average*. This is what the ranking uses. |
 | `energy` | energy at the last turn — the old score. Printed as a second ranking whenever it disagrees with the first, since the disagreement is the interesting part. |
 | `alive` | share of the game the source had at least one wesen. |
+| `cpu` | share of the real time spent running source code. Nothing in the rules limits this — in-game `time` budgets what a wesen may *do*, not what its code may cost — so a source that thinks for a second a turn shows up here and nowhere else. It is usually the answer to why a game crawls. |
 
 `--seeds 1,2,3` plays each seed and averages, with a `wins` column, so
 one lucky game cannot decide a match. `--json FILE` writes it all out.

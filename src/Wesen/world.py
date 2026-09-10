@@ -1,6 +1,7 @@
 """The world in which Wesen takes place"""
 
 import json
+import time
 import traceback
 
 import numpy as np
@@ -53,6 +54,12 @@ class World:
         # error messages already reported (see noteFault)
         self.faults = {}
         self.reported = set()
+        # source name -> seconds of real time its code has been given
+        # since the game started, and the engine's own share of it.
+        # In-game `time` is what a wesen may do in a turn; this is what
+        # it costs the machine, which the rules say nothing about and
+        # which one badly written source can spend all of
+        self.spent = {}
         self.sharedState = self.infoAllWorld["wesen"].get(
             "shared_state", isolation.DEFAULT_MODE
         )
@@ -122,12 +129,19 @@ class World:
     def initStats(self):
         """resets self.stats to count and energy 0 for all object-types"""
         stats = {
-            "food": {"count": 0, "energy": 0, "upkeep": 0},
-            "global": {"count": 0, "energy": 0, "upkeep": 0},
+            "food": self.emptyStats(),
+            "global": self.emptyStats(),
         }
         for source in self.infoAllWorld["wesen"]["sources"]:
-            stats[source] = {"count": 0, "energy": 0, "upkeep": 0}
+            stats[source] = self.emptyStats()
         self.stats = stats
+
+    @staticmethod
+    def emptyStats():
+        """one turn's tally for one source: how many wesen, how much
+        energy between them, what they burnt, and how long their code
+        ran for (see World.spent)"""
+        return {"count": 0, "energy": 0, "upkeep": 0, "seconds": 0.0}
 
     def DeleteObject(self, objectid):
         """removes an object from the world."""
@@ -395,9 +409,7 @@ class World:
             if o.objectType == "wesen":
                 # a restored game may hold wesen of a source that is not
                 # in this config's list, so the entry is made on demand
-                counts = stats.setdefault(
-                    o.source, {"count": 0, "energy": 0, "upkeep": 0}
-                )
+                counts = stats.setdefault(o.source, self.emptyStats())
                 counts["count"] += 1
                 counts["energy"] += o.energy
                 counts["upkeep"] += o.lastUpkeep
@@ -406,7 +418,10 @@ class World:
                 stats["food"]["count"] += 1
                 stats["food"]["energy"] += o.energy
                 food.append(o)
+        spent = self.spent
+        clock = time.perf_counter
         for o in wesen:
+            started = clock()
             try:
                 o.main()
             except RuleException as exc:
@@ -416,7 +431,18 @@ class World:
                 # the source (or the engine) has a bug: skip its turn,
                 # never end the game for the other players
                 self.noteFault(o, exc, rule=False)
+            finally:
+                # two clock reads per wesen per turn, which is nothing
+                # next to the turn itself and is the only way to say
+                # afterwards whose code the game was actually spent in
+                elapsed = clock() - started
+                spent[o.source] = spent.get(o.source, 0.0) + elapsed
+                stats[o.source]["seconds"] += elapsed
+        started = clock()
         self.stepFood(food)
+        elapsed = clock() - started
+        spent["food"] = spent.get("food", 0.0) + elapsed
+        stats["food"]["seconds"] += elapsed
         stats["global"] = {
             "count": len(self.objects),
             "energy": sum(
@@ -424,6 +450,9 @@ class World:
             ),
             "upkeep": sum(
                 objectType["upkeep"] for objectType in stats.values()
+            ),
+            "seconds": sum(
+                objectType["seconds"] for objectType in stats.values()
             ),
         }
         self.stats = stats

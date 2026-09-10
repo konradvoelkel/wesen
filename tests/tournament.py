@@ -126,9 +126,24 @@ class TestPlayingATournament(unittest.TestCase):
         self.assertEqual(sum(row["wins"] for row in scores["summary"]), 2)
 
     def test_a_seed_replays(self):
+        """everything about a game is a function of its seed - except
+        how long the machine took over it, which is the one number in
+        the scoreboard that is measured rather than played"""
+
+        def scores(game):
+            return {
+                name: {
+                    key: value
+                    for key, value in entry.items()
+                    if key != "seconds"
+                }
+                for name, entry in game.items()
+            }
+
         first = self.run_("--seeds", "5")["games"][0]
         second = self.run_("--seeds", "5")["games"][0]
-        self.assertEqual(first, second)
+        self.assertEqual(scores(first), scores(second))
+        self.assertNotEqual(first["GreatRabbit"]["seconds"], 0)
 
     def test_an_unknown_source_is_reported_and_nothing_is_played(self):
         with self.assertRaises(SystemExit) as caught:

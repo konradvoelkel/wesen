@@ -17,6 +17,11 @@ end. So three numbers are reported here:
     the turns on which the source had at least one wesen, as a share of
     the game. Surviving is not winning, but a source that dies on turn
     400 did not win a 3000-turn game whatever its curve looked like.
+``cpu``
+    its share of the real time spent running source code. The rules
+    budget a wesen's in-game ``time``, not the interpreter's, so this is
+    the only place where a source that thinks for a second a turn shows
+    up at all - and it is usually the answer to why a game crawls.
 
 The ranking is by ``mean``, and the ranking by ``energy`` is printed
 next to it whenever the two disagree, because the disagreement is the
@@ -51,6 +56,7 @@ class Result:
         self.peak = 0
         self.alive = 0
         self.lastAlive = 0
+        self.seconds = 0.0
 
     def note(self, turn, entry):
         """one turn's statistics for this source"""
@@ -58,6 +64,7 @@ class Result:
         self.count = entry["count"]
         self.area += entry["energy"]
         self.peak = max(self.peak, entry["energy"])
+        self.seconds += entry.get("seconds", 0.0)
         if entry["count"]:
             self.alive += 1
             self.lastAlive = turn
@@ -82,6 +89,7 @@ class Result:
             "alive": self.alive,
             "lastAlive": self.lastAlive,
             "survival": round(self.survival, 3),
+            "seconds": round(self.seconds, 2),
         }
 
 
@@ -182,15 +190,20 @@ def header(names):
 def table(results):
     """the scoreboard for one game, best mean energy first"""
     order = sorted(results.values(), key=lambda r: r.mean, reverse=True)
+    # each source's share of the time spent in source code (the food
+    # economy and the rest of the engine are not in this total: the
+    # question here is how the players divide the machine between them)
+    machine = sum(r.seconds for r in results.values()) or 1.0
     lines = [
         f"{'source':>14} {'mean':>10} {'energy':>10} {'peak':>10} "
-        f"{'count':>6} {'alive':>7}"
+        f"{'count':>6} {'alive':>7} {'cpu':>6}"
     ]
     for result in order:
         lines.append(
             f"{result.name:>14} {result.mean:>10.0f} "
             f"{result.energy:>10d} {result.peak:>10d} "
-            f"{result.count:>6d} {result.survival:>6.0%}"
+            f"{result.count:>6d} {result.survival:>6.0%} "
+            f"{result.seconds / machine:>5.0%}"
         )
     byEnergy = sorted(
         results.values(), key=lambda r: r.energy, reverse=True
