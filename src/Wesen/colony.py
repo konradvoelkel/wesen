@@ -28,6 +28,47 @@ a handle into the sender.
 """
 
 
+def _whole(value, default=0):
+    """a number that was meant to be one, or None if it was not.
+
+    Booleans are numbers in Python and are not meant here; a string
+    that looks like a number is not a number somebody sent us."""
+    if value is None:
+        return default
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return None
+    return int(value)
+
+
+def _cell(value):
+    """a pair of whole coordinates, or None"""
+    if not isinstance(value, (tuple, list)) or len(value) != 2:
+        return None
+    x, y = _whole(value[0], None), _whole(value[1], None)
+    return None if x is None or y is None else (x, y)
+
+
+def _colleague(entry):
+    """one row of the roll a message carries, checked field by field"""
+    if not isinstance(entry, (tuple, list)) or len(entry) != 6:
+        return None
+    uid, x, y, energy, turn, role = entry
+    cell = _cell((x, y))
+    energy, turn = _whole(energy, None), _whole(turn, None)
+    if cell is None or energy is None or turn is None:
+        return None
+    if not isinstance(uid, (str, int, tuple)):
+        return None
+    return (
+        uid,
+        cell[0],
+        cell[1],
+        energy,
+        turn,
+        role if isinstance(role, str) else "",
+    )
+
+
 class Colony:
     """one wesen's share of its colony's bookkeeping"""
 
@@ -150,27 +191,54 @@ class Colony:
         """merge a message from a colleague and hand back its news.
 
         Returns None for anything that is not one of ours, so a source
-        can use it as the whole body of its `Receive`."""
+        can use it as the whole body of its `Receive`.
+
+        "Not one of ours" has to include a message wearing our own mark
+        that is nonsense underneath. `Broadcast` reaches every wesen in
+        range whatever its source, a sigil is a constant sitting in a
+        file anybody can read, and an id comes free with `closerLook`,
+        so a rival can say anything it likes in our name. A colony that
+        can be stopped by a malformed word is not much of a colony:
+        every field is checked before it is believed, and a message
+        that does not hold together is dropped whole rather than
+        applied in part."""
         if not isinstance(message, dict) or message.get("s") != self.sigil:
             return None
         uid = message.get("u")
         if uid is not None and uid == self.uid:
             return None
-        self.sync(int(message.get("t", 0)))
-        if uid is not None:
-            self.note(
-                uid,
-                message["p"],
-                message["e"],
-                int(message["t"]),
-                message.get("r", ""),
-            )
+        turn = _whole(message.get("t"))
+        if turn is None:
+            return None
+        self.sync(turn)
+        if uid is not None and not self._noteFrom(message, uid, turn):
+            return None
         for entry in message.get("w", ()):
-            other, x, y, energy, turn, role = entry
+            heard = _colleague(entry)
+            if heard is None:
+                continue
+            other, x, y, energy, seen, role = heard
             if other != uid and other != self.uid:
-                self.note(other, (x, y), energy, turn, role)
+                self.note(other, (x, y), energy, seen, role)
         self.heard += 1
-        return message.get("n") or {}
+        news = message.get("n")
+        return news if isinstance(news, dict) else {}
+
+    def _noteFrom(self, message, uid, turn):
+        """what the sender says about itself, if it says it properly"""
+        position = _cell(message.get("p"))
+        energy = _whole(message.get("e"))
+        if position is None or energy is None:
+            return False
+        role = message.get("r", "")
+        self.note(
+            uid,
+            position,
+            energy,
+            turn,
+            role if isinstance(role, str) else "",
+        )
+        return True
 
     def forget(self):
         """drop what is too old to be worth carrying"""
