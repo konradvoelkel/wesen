@@ -20,6 +20,7 @@ STRING_MESSAGE_REMOVED = "removed file %s"
 STRING_CONFIGED = {
     "WESEN": {
         "SOURCES": "(comma-seperated wesen sources)\nsources=",
+        "SOURCEPATH": "(comma-separated extra folders to look for sources in; ~/.wesen/sources is always searched)\nsourcepath=",
         "COUNT": "(how much wesen are created during startup from each source)\ncount=",
         "ENERGY": "(starting energy of every wesen at the beginning)\nenergy=",
         "MAXAGE": "(maximum age of wesen until they die)\nmaxage=",

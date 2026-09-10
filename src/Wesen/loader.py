@@ -3,14 +3,18 @@ and interprets command-line arguments.
 It makes sure that the configured wesen sources exist.
 It then runs a Wesend instance."""
 
-import importlib
 import sys
 from argparse import Action, ArgumentParser
-from os import mkdir
-from os.path import exists, expanduser, join
+from os import makedirs
 
 from .configed import ConfigEd
 from .defaults import DEFAULT_CONFIGFILE
+from .sourceloader import (
+    DEFAULT_SOURCE_DIR,
+    SourceError,
+    loadSource,
+    setSearchPath,
+)
 from .strings import (
     STRING_USAGE_CONFIGFILE,
     STRING_USAGE_DEFAULTCONFIG,
@@ -41,7 +45,7 @@ def Loader(run_immediately=True):
     before the start, pass run_immediately=False,
     then Loader returns a Wesend instance,
     which you can start by start()"""
-    _enableCustomSourcesFolder()
+    _ensureSourceFolder()
     parsedArgs, extraArgs = _parseArgs()
     configEd = ConfigEd(parsedArgs.configfile)
     if parsedArgs.invoke_defaultconfig:
@@ -60,6 +64,7 @@ def Loader(run_immediately=True):
             "handing over the following command-line arguments to OpenGL: ",
             " ".join(extraArgs),
         )
+    setSearchPath(config["wesen"].get("sourcepath", ""))
     _checkSourcesAvailability(config["wesen"]["sources"])
     wesend = Wesend(config)
     if run_immediately:
@@ -71,15 +76,11 @@ def Loader(run_immediately=True):
     return wesend
 
 
-def _enableCustomSourcesFolder():
-    """Appends to the path a folder where the user can store custom AI code."""
-    configroot = join(expanduser("~"), ".wesen")
-    sourcefolder = join(configroot, "sources")
-    if not exists(configroot):
-        mkdir(configroot)
-    if not exists(sourcefolder):
-        mkdir(sourcefolder)
-    sys.path.append(sourcefolder)
+def _ensureSourceFolder():
+    """Makes sure the folder where a player keeps their own AI code
+    exists, so that it can be found rather than explained. Where the
+    game looks is decided in sourceloader.py."""
+    makedirs(DEFAULT_SOURCE_DIR, exist_ok=True)
 
 
 def _parseArgs():
@@ -133,6 +134,13 @@ def _parseArgs():
         action=_OverwriteConfigAction,
     )
     parser.add_argument(
+        "-p",
+        "--sourcepath",
+        section="wesen",
+        dest="sourcepath",
+        action=_OverwriteConfigAction,
+    )
+    parser.add_argument(
         "-r",
         "--resume",
         dest="resume",
@@ -164,21 +172,17 @@ def _addOverwriteBool(parser, argName, section, key):
 
 
 def _checkSourcesAvailability(sourcesList):
-    """imports all sources listed in sourcesList.
-    Upon ImportError, prints a polite message and kills the process."""
-    sources = sourcesList.split(",")
-    for source in sources:
+    """loads every source listed in sourcesList, so that a name that is
+    not there, or code that does not import, is said plainly now rather
+    than found halfway into building the world."""
+    if isinstance(sourcesList, str):
+        sourcesList = sourcesList.split(",")
+    for source in sourcesList:
         try:
-            importlib.import_module(
-                ".sources." + source + ".main", __package__
-            ).WesenSource
-        except ImportError as e:
-            print(e)
-            print(
-                "The source code for one of your AIs could not be loaded: ",
-                source,
-            )
-            sys.exit()
+            loadSource(source.strip())
+        except SourceError as e:
+            print(f"wesen: {e}")
+            sys.exit(1)
 
 
 class _OverwriteConfigAction(Action):

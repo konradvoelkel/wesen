@@ -28,6 +28,7 @@ CONFIG_OPTIONS = [
         "wesen",
         [
             ("sources", str),  # comma-separated
+            ("sourcepath", str),  # comma-separated directories
             ("count", int),
             ("energy", int),
             ("maxage", int),
@@ -108,6 +109,9 @@ CONFIG_DEFAULTS = {
     "wesen": {
         "sources": "Rincewind,Nightwatch,Dwarf,GreatRabbit,Vetinari,"
         "Weatherwax,LuTze",
+        # extra folders holding player-written sources; ~/.wesen/sources
+        # is always searched as well (see sourceloader.py)
+        "sourcepath": "",
         "count": 5,
         "energy": 300,
         "maxage": 1000,

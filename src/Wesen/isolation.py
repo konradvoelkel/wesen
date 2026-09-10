@@ -244,7 +244,10 @@ class Genes:
 
     def __init__(self, cls):
         self.cls = cls
-        self.source = cls.__module__.split(".")[-2]
+        # Wesen.sources.Dwarf.main, or Dwarf.main for a player's own
+        # source package, or plain Dwarf for a single-file one
+        parts = cls.__module__.split(".")
+        self.source = parts[-2] if len(parts) > 1 else parts[-1]
         # a source is a package, and its modules have globals, which are
         # shared exactly as class attributes are. They cannot be handed
         # out per wesen (there is one module), so they are simply frozen

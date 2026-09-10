@@ -52,9 +52,11 @@ class Wesend:
             CONFIG_DEFAULTS["climate"], **config.get("climate", {})
         )
         if isinstance(self.infoWesen["sources"], str):
-            self.infoWesen["sources"] = self.infoWesen[
-                "sources"
-            ].split(",")
+            self.infoWesen["sources"] = [
+                name.strip()
+                for name in self.infoWesen["sources"].split(",")
+                if name.strip()
+            ]
         self.infoWorld["Debug"] = self.Debug
         infoAllWorld = {
             "world": self.infoWorld,

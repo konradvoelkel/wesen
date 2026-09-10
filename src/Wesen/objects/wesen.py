@@ -1,8 +1,7 @@
 """The class for all data and operations a single Wesen has"""
 
-import importlib
-
 from ..isolation import DEFAULT_MODE, prepare, readOnly, sealed
+from ..sourceloader import loadSource
 from .base import WorldObject, stochasticRound
 
 
@@ -28,10 +27,9 @@ class Wesen(WorldObject):
         self.infoFood = infoAllObject["food"]
         self.source = self.infoObject["source"]
         self.lastUpkeep = 0
-        # TODO one can probably avoid multiple imports (if not already)
-        WesenSource = importlib.import_module(
-            "..sources." + self.source + ".main", __package__
-        ).WesenSource
+        # the player's own directories first, then the sources shipped
+        # with the game; cached, so this costs an import once per source
+        WesenSource = loadSource(self.source)
         # class attributes are genetic information, not a shared brain:
         # see isolation.py and [wesen] shared_state
         self.sharedState = self.infoObject.get(
