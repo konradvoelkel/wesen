@@ -124,6 +124,9 @@ Actions that cost time silently do nothing and return `False`/`[]` if
 | `Talk(id, msg)` | 1 | `Receive(msg)` on that wesen if within 24 cells (fixed 2026-09-09, it used to raise `NameError`) |
 | `Broadcast(msg)` | 1 | `Receive(msg)` on all wesen within 16 cells |
 
+A dict message arrives carrying `msg["from"] = {"source", "id"}`, put
+there by the engine and unforgeable — see section 3c.
+
 `RuleException` (aborts only this wesen's turn, no other penalty yet):
 `Eat`/`Attack` with an id that no longer exists, `Eat` on a different cell
 or on a non-food. Any *other* exception crashes the whole game. So: call
@@ -198,6 +201,20 @@ engine enforces it:
 In `isolate` and `strict` the engine also closes the two obvious ways
 round the rule:
 
+* **A message says truthfully who sent it.** A sigil is a constant in a
+  file anybody can read and an id comes free with `closerLook`, so
+  before 0.8 any wesen could say anything in another source's name —
+  and a single forged word (`Broadcast({"s": "lutze/1", "u": 1})`)
+  took a turn away from three of the four colonies here. The engine now
+  stamps every dict message with the sender's real source and id, under
+  the key `"from"`, written *last*, so a payload carrying a `"from"` of
+  its own is simply overwritten. Read it with `self.sender(message)`
+  (the note, or `None`) and `self.fromColleague(message)` (is this one
+  of ours?) — and make `fromColleague` the first line of any `Receive`
+  that reads a protocol of its own. What a wesen *says* may still be a
+  lie: an enemy can tell you whatever it likes about food, danger or
+  its own intentions, and weighing that is the game. Who is saying it
+  is not up for negotiation.
 * **A message is a value.** `Talk` and `Broadcast` seal the payload:
   dicts come out frozen (still `dict`, so `isinstance(message, dict)`
   and `message["k"]` work as anybody would write them — writing raises),

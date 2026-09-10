@@ -1,7 +1,13 @@
 """The class for all data and operations a single Wesen has"""
 
 from .. import budget
-from ..isolation import DEFAULT_MODE, prepare, readOnly, sealed
+from ..isolation import (
+    DEFAULT_MODE,
+    prepare,
+    readOnly,
+    sealed,
+    stamped,
+)
 from ..sourceloader import loadSource
 from .base import WorldObject, stochasticRound
 
@@ -400,15 +406,22 @@ class Wesen(WorldObject):
         return False
 
     def _sealed(self, message):
-        """what a message may carry: a value, not a handle.
+        """what a message may carry: a value, not a handle - and who it
+        is really from.
 
         Handing another wesen a mutable object would be a shared brain
         with extra steps - both sides would go on reading and writing
         the same dict - so unless the rules allow shared state, what is
-        delivered is a frozen copy (see isolation.deepFreeze)."""
+        delivered is a frozen copy (see isolation.deepFreeze).
+
+        The engine then stamps it with the sender's source and id, last,
+        so that a wesen cannot speak in another source's name (see
+        isolation.stamped). `allow` is the old game with none of this."""
         if self.sharedState == "allow":
-            return message
-        return sealed(message)
+            # the old game keeps its writable messages, and still says
+            # truthfully who sent them
+            return stamped(message, self.source, id(self), freeze=False)
+        return stamped(sealed(message), self.source, id(self))
 
     def Die(self):
         if self.energy:

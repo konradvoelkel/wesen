@@ -312,6 +312,10 @@ class WesenSource(DefaultWesenSource):
         Anything that is not ours is ignored rather than trusted: the
         channel is open to every source in range."""
         try:
+            if not self.fromColleague(message):
+                # the engine's own note of who sent it. Without this,
+                # the sigil below says only what a stranger claims
+                return
             if not isinstance(message, dict) or message.get("s") != SIGIL:
                 return
             if "orders" in message:

@@ -36,6 +36,30 @@ class DefaultWesenSource:
     def Receive(self, message):
         """message should be a dict"""
 
+    # --- who is talking --------------------------------------------------
+
+    def sender(self, message):
+        """who really sent this message, as the engine saw it: a dict
+        with "source" and "id", or None for a message that carries no
+        note (one that was not a dict, or a game with [wesen]
+        shared_state = allow).
+
+        The note is the engine's and cannot be forged. What the message
+        *says* still can be: an enemy may tell you whatever it likes,
+        and weighing that is the game."""
+        if not isinstance(message, dict):
+            return None
+        envelope = message.get("from")
+        return envelope if isinstance(envelope, dict) else None
+
+    def fromColleague(self, message):
+        """True if the engine says this came from a wesen of my own
+        source. The first line of any Receive that reads a protocol of
+        its own: without it, anybody in range can put your sigil on a
+        malformed message and take your turn away."""
+        envelope = self.sender(message)
+        return bool(envelope) and envelope.get("source") == self.source
+
     # --- food economy helpers (work for both food rules) -----------------
     # food dicts are the entries of closerLook() (they carry "energy").
 

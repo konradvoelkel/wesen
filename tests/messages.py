@@ -122,5 +122,140 @@ class TestReceiveSurvivesAnything(unittest.TestCase):
         self.assertEqual(heard[0]["hello"], 1)
 
 
+class TestNobodySpeaksInAnothersName(unittest.TestCase):
+    """The engine stamps every message with the source that sent it,
+    last, so the note cannot be forged (see isolation.stamped). A wesen
+    may still lie about anything it *says* - that is the game."""
+
+    def twoSources(self, mine, theirs="DrunkenSailor"):
+        """one wesen of each, standing on the same cell"""
+        config = {k: dict(v) for k, v in CONFIG_DEFAULTS.items()}
+        config["gui"]["enable"] = False
+        config["world"].update(
+            {"length": 60, "seed": 5, "Debug": lambda _: None}
+        )
+        config["wesen"].update({"sources": [mine, theirs], "count": 0})
+        config["food"]["count"] = 10
+        world = World(config)
+        info = dict(world.infoAllWorld["wesen"])
+        victim = world.AddObject(
+            dict(info, source=mine, position=[30, 30])
+        )
+        forger = world.AddObject(
+            dict(info, source=theirs, position=[30, 30])
+        )
+        for one in (victim, forger):
+            one.time = one.infoTime["max"]
+        return world, victim, forger
+
+    def test_a_forged_message_is_ignored_and_costs_nothing(self):
+        """the exploit: a stranger puts your sigil on rubbish. Ids come
+        from closerLook and sigils are constants in a readable file, so
+        both were free to guess"""
+        for source, sigil in sorted(SPEAKERS.items()):
+            with self.subTest(source=source):
+                world, victim, forger = self.twoSources(source)
+                before = dict(victim.wesenSource.__dict__)
+                for forged in [
+                    {"s": sigil, "u": 1},
+                    {"s": sigil, "to": victim.wesenSource.id()},
+                    {"s": sigil, "to": victim.wesenSource.id(), "o": 7},
+                    {"s": sigil, "clock": "yesterday", "u": ["a"]},
+                    # and a forged note on top of the forged message
+                    {"s": sigil, "from": {"source": source, "id": 1}},
+                ]:
+                    forger.time = forger.infoTime["max"]
+                    forger.Talk(victim.wesenSource.id(), forged)
+                    forger.time = forger.infoTime["max"]
+                    forger.Broadcast(forged)
+                self.assertEqual(world.faults, {})
+                self.assertFalse(victim.dead)
+                self.assertEqual(
+                    victim.wesenSource.__dict__.keys(), before.keys()
+                )
+
+    def test_the_note_says_who_really_sent_it(self):
+        world, victim, forger = self.twoSources("Rincewind")
+        heard = []
+        victim.Receive = heard.append
+        victim.wesenSource.Receive = heard.append
+        forger.Broadcast({"s": "clacks/2", "from": {"source": "lies"}})
+        self.assertEqual(len(heard), 1)
+        self.assertEqual(
+            heard[0]["from"]["source"],
+            "DrunkenSailor",
+            "a payload of its own overwrote the engine's note",
+        )
+        self.assertEqual(heard[0]["from"]["id"], forger.wesenSource.id())
+
+    def test_a_colleague_is_still_believed(self):
+        """the check that the guard has not simply closed the channel"""
+        world, one, _ = self.twoSources("Rincewind")
+        info = dict(world.infoAllWorld["wesen"])
+        two = world.AddObject(
+            dict(info, source="Rincewind", position=[30, 30])
+        )
+        two.time = two.infoTime["max"]
+        one.time = one.infoTime["max"]
+        heard = []
+        two.Receive = heard.append
+        two.wesenSource.Receive = heard.append
+        one.Broadcast({"s": "clacks/2", "u": "someone", "t": 1})
+        self.assertTrue(heard, "a colleague was not heard at all")
+        self.assertTrue(
+            two.wesenSource.fromColleague(heard[0]),
+            "a genuine colleague failed the check",
+        )
+
+
+class TestEverySharedStateMode(unittest.TestCase):
+    """Who sent a message is a rule of the game, not one of the things
+    [wesen] shared_state relaxes: every mode stamps. What the setting
+    decides is whether the message the listener gets can be written to."""
+
+    def hearOneself(self, mode):
+        config = {k: dict(v) for k, v in CONFIG_DEFAULTS.items()}
+        config["gui"]["enable"] = False
+        config["world"].update(
+            {"length": 60, "seed": 5, "Debug": lambda _: None}
+        )
+        config["wesen"].update(
+            {"sources": ["Rincewind"], "count": 0, "shared_state": mode}
+        )
+        config["food"]["count"] = 10
+        world = World(config)
+        info = dict(world.infoAllWorld["wesen"])
+        speaker = world.AddObject(
+            dict(info, source="Rincewind", position=[30, 30])
+        )
+        listener = world.AddObject(
+            dict(info, source="Rincewind", position=[30, 30])
+        )
+        speaker.time = speaker.infoTime["max"]
+        heard = []
+        listener.Receive = heard.append
+        listener.wesenSource.Receive = heard.append
+        speaker.Broadcast({"s": "clacks/2", "u": "x", "t": 1})
+        return listener, heard
+
+    def test_a_colleague_is_recognised_in_every_mode(self):
+        for mode in ("isolate", "strict", "allow"):
+            with self.subTest(mode=mode):
+                listener, heard = self.hearOneself(mode)
+                self.assertEqual(len(heard), 1)
+                self.assertTrue(
+                    listener.wesenSource.fromColleague(heard[0]),
+                    f"a colleague went unrecognised under {mode}",
+                )
+
+    def test_only_the_strict_modes_freeze_what_is_delivered(self):
+        for mode in ("isolate", "strict"):
+            _, heard = self.hearOneself(mode)
+            with self.assertRaises(TypeError):
+                heard[0]["mine now"] = 1
+        _, heard = self.hearOneself("allow")
+        heard[0]["mine now"] = 1  # the old game, unchanged
+
+
 if __name__ == "__main__":
     unittest.main()

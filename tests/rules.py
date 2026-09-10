@@ -613,10 +613,21 @@ class TestMessages(unittest.TestCase):
         speaker.time = world.infoAllWorld["time"]["max"]
         return speaker, listener, heard
 
+    def assertDelivered(self, heard, payload, speaker):
+        """what arrives is what was said, plus the engine's note of who
+        said it (see isolation.stamped)"""
+        self.assertEqual(len(heard), 1)
+        message = dict(heard[0])
+        note = message.pop("from", None)
+        self.assertEqual(message, payload)
+        self.assertEqual(
+            note, {"source": speaker.source, "id": id(speaker)}
+        )
+
     def test_talk_reaches_a_wesen_in_look_range(self):
         speaker, listener, heard = self.makeTwo(5)
         self.assertTrue(speaker.Talk(id(listener), {"hello": 1}))
-        self.assertEqual(heard, [{"hello": 1}])
+        self.assertDelivered(heard, {"hello": 1}, speaker)
 
     def test_talk_does_not_reach_beyond_look_range(self):
         # 30 apart in a world of 60 is the farthest two wesen can be:
@@ -631,12 +642,12 @@ class TestMessages(unittest.TestCase):
         speaker, listener, heard = self.makeTwo(5, where=58)
         self.assertEqual(listener.position, [10, 3])
         self.assertTrue(speaker.Talk(id(listener), {"hello": 1}))
-        self.assertEqual(heard, [{"hello": 1}])
+        self.assertDelivered(heard, {"hello": 1}, speaker)
 
     def test_broadcast_reaches_everybody_in_talk_range(self):
         speaker, listener, heard = self.makeTwo(5)
         self.assertTrue(speaker.Broadcast({"news": 2}))
-        self.assertEqual(heard, [{"news": 2}])
+        self.assertDelivered(heard, {"news": 2}, speaker)
 
 
 class TestSharedState(unittest.TestCase):

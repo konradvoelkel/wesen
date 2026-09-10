@@ -191,7 +191,9 @@ class WesenSource(DefaultWesenSource):
         # genetic information now (see isolation.py), so the roll, the
         # estates and the homes below are this wesen's own and reach the
         # others only if somebody broadcasts them
-        self.colony = Colony(type(self).SIGIL, self.worldlength, 80)
+        self.colony = Colony(
+            type(self).SIGIL, self.worldlength, 80, source=self.source
+        )
         self.news = {}
         self.said = -99
         self.inbox = None  # orders talked to us at birth
@@ -387,6 +389,10 @@ class WesenSource(DefaultWesenSource):
         """a colleague's word, or orders from a parent at birth"""
         cls = type(self)
         if not isinstance(message, dict) or message.get("s") != cls.SIGIL:
+            return
+        if not self.fromColleague(message):
+            # the engine's own note of who sent it. Without this, the
+            # sigil below says only what a stranger chose to claim
             return
         if message.get("to") is not None:
             if message["to"] == self.id():

@@ -143,6 +143,42 @@ def sealed(value, depth=0):
     return f"<{type(value).__name__}>"
 
 
+# the one key in a message that belongs to the engine and not to the
+# wesen sending it
+SENDER_KEY = "from"
+
+
+def stamped(message, source, wesenid, freeze=True):
+    """a sealed message with the engine's own note of who sent it.
+
+    A sigil is a constant sitting in a file anybody can read and an id
+    comes free with `closerLook`, so before this a wesen could say
+    anything at all in another source's name - and three of the four
+    colonies in this game could be stopped for a turn by a single
+    forged word. The note is written by the engine and written *last*,
+    so a payload carrying a `from` of its own is simply overwritten.
+
+    What a wesen *says* may be a lie: that is the game, and a colony
+    has to weigh what it is told. Who is saying it is not up for
+    negotiation.
+
+    Only a message that is a mapping can carry a note, there being
+    nowhere to put one otherwise; a source that wants to be recognised
+    sends a dict, as every one of them does.
+
+    Every message is stamped, in every mode: who sent something is a
+    rule of the game and not one of the things `[wesen] shared_state`
+    relaxes. `freeze` is what that setting decides - under `allow` the
+    note goes onto a plain copy, so the message stays as writable as it
+    always was there."""
+    if not isinstance(message, dict):
+        return message
+    envelope = {"source": source, "id": wesenid}
+    if not freeze:
+        return {**message, SENDER_KEY: envelope}
+    return FrozenDict({**message, SENDER_KEY: FrozenDict(envelope)})
+
+
 class ReadOnly(dict):
     """a live, read-only view of one of the engine's own dicts.
 

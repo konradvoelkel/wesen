@@ -27,6 +27,8 @@ delivered (`isolation.sealed`): the receiver gets a frozen copy, never
 a handle into the sender.
 """
 
+from .isolation import SENDER_KEY
+
 
 def _whole(value, default=0):
     """a number that was meant to be one, or None if it was not.
@@ -75,8 +77,13 @@ class Colony:
     # how long a wesen stays on the roll without being heard from
     ROLL_TTL = 200
 
-    def __init__(self, sigil, worldLength, radius=80):
+    def __init__(self, sigil, worldLength, radius=80, source=None):
         self.sigil = sigil
+        # the name of our own source, so that a message can be checked
+        # against the engine's note of who really sent it. None means
+        # the check is skipped, which is only right for a game with
+        # [wesen] shared_state = allow
+        self.source = source
         self.length = worldLength
         # the radius the census extrapolates from (see census())
         self.radius = radius
@@ -204,6 +211,8 @@ class Colony:
         applied in part."""
         if not isinstance(message, dict) or message.get("s") != self.sigil:
             return None
+        if not self.fromColleague(message):
+            return None
         uid = message.get("u")
         if uid is not None and uid == self.uid:
             return None
@@ -239,6 +248,21 @@ class Colony:
             role if isinstance(role, str) else "",
         )
         return True
+
+    def fromColleague(self, message):
+        """does the engine say this came from one of ours?
+
+        The sigil above says only what the sender claims to be, and a
+        sigil is a constant in a file anybody can read. This is the
+        engine's own note of who sent it, which cannot be forged (see
+        isolation.stamped)."""
+        if self.source is None:
+            return True
+        envelope = message.get(SENDER_KEY)
+        return (
+            isinstance(envelope, dict)
+            and envelope.get("source") == self.source
+        )
 
     def forget(self):
         """drop what is too old to be worth carrying"""
