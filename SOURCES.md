@@ -12,7 +12,7 @@ uv run wesen -c local/tournament.conf --disablegui   # headless, Ctrl+C stops
 uv run wesen -s MyWesen,Dwarf -p ~/my-wesen              # sources of your own
 uv run python local/tournament.py --turns 2000 --every 250 --seed 1 \
     --sources Vetinari,Dwarf,Nightwatch,Rincewind,GreatRabbit          # headless with stats table
-uv run python -m unittest tests.persistence
+uv run python -m unittest discover -s tests -t . -p '*.py'   # the whole suite
 uv run ruff check src/Wesen/sources/<Name>/ && uv run ruff format src/Wesen/sources/<Name>/
 ```
 

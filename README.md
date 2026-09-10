@@ -26,3 +26,32 @@ uv venv
 uv sync
 uv run wesen
 ```
+
+The GUI starts paused; press space.
+
+
+Write a wesen
+=====
+
+Put a source of your own in `~/.wesen/sources` — either a single file
+`MyWesen.py` or a folder `MyWesen/main.py` — and play it against the
+sources shipped with the game:
+
+```sh
+uv run wesen -s MyWesen,Dwarf,Rincewind
+```
+
+`-p DIR` adds another folder to look in. `SOURCES.md` is the guide: the
+whole API, the rules that matter, and what the existing sources do.
+
+
+Develop
+=====
+
+```sh
+uv run ruff check && uv run ruff format --check
+uv run mypy src
+uv run python -m unittest discover -s tests -t . -p '*.py'
+```
+
+`OVERVIEW.md` maps the codebase. The same three commands run in CI.

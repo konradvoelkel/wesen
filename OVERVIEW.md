@@ -35,7 +35,9 @@ src/Wesen/
   objects/food.py        # Food: Grow, Seed, merge food on same cell
   sources/<Name>/main.py # AIs, class must be called WesenSource
   gui/                   # freeglut/PyOpenGL GUI: map + energy graph + text stats
-tests/persistence.py     # unittest: persist -> restore -> persist round trip
+tests/                   # unittest: rules, persistence, sources,
+                         #   determinism (same seed, two interpreters),
+                         #   game (a whole game of every shipped source)
 profile.py, testradius.py, testrange.py  # dev/benchmark scripts
 data/                    # old changelog / release plan
 ```
@@ -50,7 +52,7 @@ uv run wesen --disablegui            # headless, prints stats every 1000 turns, 
 uv run wesen -c FILE -s A,B,C        # alternative config file, override sources
 uv run wesen --defaultconfig         # (re)write defaults; -e interactive editor; --printconfig
 uv run wesen -r                      # resume ~/.wesen/gamestate
-uv run python -m unittest tests.persistence
+uv run python -m unittest discover -s tests -t . -p '*.py'   # the whole suite
 ```
 
 GUI keys: space pause, `s` single step (when paused), `+`/`-` speed,
