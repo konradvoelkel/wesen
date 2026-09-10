@@ -87,6 +87,8 @@ class WesenSource(DefaultWesenSource):
     BOOT_CHILD = 30  # founders split while a child would get this much
     BOOT_PER_CELL = 8  # gardeners per cell during the bootstrap
     HOME_MEMBERS = 4  # gardeners kept per cell afterwards
+    DISTRICT_RANGE = 60  # how far from home the ground we keep reaches
+    WESEN_PER_DISTRICT = 4  # ... and how many of us it feeds
     CHILD_MIN = 120  # energy a replacement gardener is born with
     MAX_COLONY = 64
     MIN_COLONY = 16  # below this, old-age children stay instead of dying
@@ -269,7 +271,9 @@ class WesenSource(DefaultWesenSource):
         self.colony.sync(self.bornTurn + self.turnsLived)
         cls.worldTurn = self.colony.clock
         now = cls.worldTurn
-        self.colony.note(self.uid, self.position(), self.energy())
+        self.colony.note(
+            self.uid, self.home or self.position(), self.energy()
+        )
         cls.alive[self.uid] = now
         pos = self.position()
         cls.ledger[self.uid] = {
@@ -315,6 +319,28 @@ class WesenSource(DefaultWesenSource):
                 for k, v in cls.claims.items()
                 if v[0] in cls.alive and now - v[1] <= cls.CLAIM_TTL
             }
+
+    def roomForAnother(self):
+        """local carrying capacity: how many of us already live off the
+        ground around my home.
+
+        This replaces a count of the whole colony against a fixed cap.
+        That count cannot be had honestly once a class attribute is
+        genetic information (see isolation.py): nobody ever hears the
+        whole roll, so every wesen under-counts the colony and concludes
+        on its own that there is room for one more. The ground a wesen
+        keeps is something it can measure for itself, from the homes it
+        has heard about, and it stops the colony growing *where it is
+        full* while the empty ground is still filling."""
+        cls = type(self)
+        if self.colonySize() >= cls.MAX_COLONY:
+            # a ceiling for the machine rather than for the game: every
+            # wesen costs the simulation time, and the estimate is only
+            # ever good enough to catch a runaway
+            return False
+        home = self.home or self.position()
+        near = len(self.colony.near(home, cls.DISTRICT_RANGE))
+        return near < cls.WESEN_PER_DISTRICT
 
     def colonySize(self):
         """estimated from how closely the colleagues we have heard from
@@ -1351,7 +1377,7 @@ class WesenSource(DefaultWesenSource):
             return None
         old = self.age() >= self.maxAge - cls.OLD_AGE_MARGIN
         colony = self.colonySize()
-        room = colony < cls.MAX_COLONY
+        room = self.roomForAnother()
         wanted = False
         if cls.lifeTuned:
             if self.role == "gardener" and room and not self.lean():
@@ -2026,7 +2052,7 @@ class WesenSource(DefaultWesenSource):
         cls = type(self)
         if self.time() < self.reproCost:
             return
-        if self.colonySize() >= cls.MAX_COLONY:
+        if not self.roomForAnother():
             return
         half = self.energy() // 2
         if half < int(1.4 * est["rmax"]) + 300:
