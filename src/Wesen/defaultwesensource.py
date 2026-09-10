@@ -1,5 +1,8 @@
 """defines an interface for AI code"""
 
+from hashlib import sha256
+from random import Random
+
 
 class DefaultWesenSource:
     """each AI code should subclass this class."""
@@ -126,6 +129,27 @@ class DefaultWesenSource:
         # growth is above 1 for phase in [0, 0.5)
         remaining = (1.0 - phase) if phase >= 0.5 else 0.0
         return int(remaining * season["period"])
+
+    def gameRandom(self, salt=""):
+        """a random generator drawn from the game's own seed.
+
+        Every wesen of this source that asks with the same salt gets
+        exactly the same numbers, in every game played on that seed, in
+        every process. That is what it is for: things a colony has to
+        agree on that nobody has to *learn* - a direction to sweep in, a
+        division of the map, a rota - where talking would be a waste
+        because the answer is the same for everyone from the first turn.
+
+        Never draw at import time or in a class body instead. When a
+        module happens to be read is not part of the game, and a draw
+        taken then is outside the seed: the same game will play
+        differently every time, which is the one thing this project
+        cannot afford (see tests/determinism.py).
+
+        For what a wesen *sees*, this is the wrong tool - that has to be
+        said out loud (see isolation.py)."""
+        material = f"{self.infoWorld.get('seed', 0)}:{self.source}:{salt}"
+        return Random(int(sha256(material.encode()).hexdigest()[:16], 16))
 
     def fertility(self, position=None):
         """how fertile the ground of a cell is (see biome.py): 1.0 is

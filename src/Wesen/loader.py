@@ -26,6 +26,7 @@ from .strings import (
     STRING_USAGE_RESUME,
     VERSIONSTRING,
 )
+from .variation import applySeed
 from .wesend import Wesend
 
 
@@ -65,6 +66,13 @@ def Loader(run_immediately=True):
             " ".join(extraArgs),
         )
     setSearchPath(config["wesen"].get("sourcepath", ""))
+    # The sources are imported next. A source that draws random numbers
+    # while its module is being read would be drawing them outside the
+    # game, and the same seed would play a different game every time;
+    # seeding here means even that is reproducible. Wesend seeds again
+    # from the same number - or from a resumed game's - and announces
+    # it. Sources should use self.gameRandom() and not draw at import.
+    applySeed(config, announce=False)
     _checkSourcesAvailability(config["wesen"]["sources"])
     wesend = Wesend(config)
     if run_immediately:

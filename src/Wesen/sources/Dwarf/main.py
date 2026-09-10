@@ -1,16 +1,23 @@
-from numpy.random import randint, uniform
+from numpy.random import randint
 
 from ...defaultwesensource import DefaultWesenSource
 from . import helper
 
 
 class WesenSource(DefaultWesenSource):
-    globalScanVector = (uniform(-1, 1), uniform(-1, 1))
-
     def __init__(self, infoAllSource):
         """Do all initialization stuff."""
         DefaultWesenSource.__init__(self, infoAllSource)
         self.infoAllSource = infoAllSource
+        # The whole colony sweeps the world along one vector. It used to
+        # be drawn in the class body, which is to say while this module
+        # was being imported - before the game was seeded, so the same
+        # seed played a different game every time. Drawn from the game
+        # seed instead: every Dwarf works it out for itself and they all
+        # get the same answer, without a word between them.
+        self.globalScanVector = tuple(
+            self.gameRandom("scan").uniform(-1, 1) for _ in range(2)
+        )
         self.minimalTime = 20
         # TODO should be something to prevent infinite loops!!
         self.minimumEnergyToEat = 2
@@ -32,8 +39,8 @@ class WesenSource(DefaultWesenSource):
                     helper.ScannerMove(
                         self,
                         scanVector=[
-                            __class__.globalScanVector[1],
-                            -__class__.globalScanVector[0],
+                            self.globalScanVector[1],
+                            -self.globalScanVector[0],
                         ],
                     )
         helper.recoverAge(self)
@@ -81,7 +88,7 @@ class WesenSource(DefaultWesenSource):
                                 # move away!
                                 helper.ScannerMove(
                                     self,
-                                    scanVector=__class__.globalScanVector,
+                                    scanVector=self.globalScanVector,
                                 )
                             else:
                                 # move back!
@@ -89,7 +96,7 @@ class WesenSource(DefaultWesenSource):
                                     self,
                                     scanVector=[
                                         -c
-                                        for c in __class__.globalScanVector
+                                        for c in self.globalScanVector
                                     ],
                                 )
             if self.time() == timeBefore:
