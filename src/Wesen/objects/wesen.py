@@ -44,6 +44,9 @@ class Wesen(WorldObject):
         del infoSourceWorld["AddObject"]
         del infoSourceWorld["DeleteObject"]
         infoSourceWorld.pop("foodfield", None)
+        # the occupancy grid is the map counted up, so a source may no
+        # more read it than the map itself
+        infoSourceWorld.pop("counts", None)
         # a source may ask about a cell, not read the whole terrain
         infoSourceWorld.pop("fertility", None)
         infoAllSource = {

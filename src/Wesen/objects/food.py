@@ -1,6 +1,8 @@
 """The Food class, which is present in every simulation."""
 
-from numpy.random import uniform
+from random import random, uniform
+
+import numpy as np
 
 from ..biome import fertilityAt
 from ..climate import growthFactor, seedingFactor
@@ -72,6 +74,10 @@ class Food(WorldObject):
         self.birthPeak = self._cfg("birth_peak")
         self.birthWidth = self._cfg("birth_width")
         self.birthMaturity = self._cfg("birth_maturity")
+        # the ground under this cell, looked up once (see fertility)
+        self._ground = None
+        self._fertility = 1.0
+        self._capacity = 1
 
     def _cfg(self, key):
         """returns a config value from this object's info,
@@ -141,7 +147,7 @@ class Food(WorldObject):
         rate = (
             self.growrate
             * growthFactor(self.infoWorld)
-            * fertilityAt(self.infoWorld, self.position)
+            * self.fertility()
         )
         self.energy += int(uniform(0, 2) * rate)
 
@@ -161,15 +167,30 @@ class Food(WorldObject):
         if self.age >= self.maxage:
             self.Die()
 
+    def fertility(self):
+        """how good the ground under this cell is (1.0 without a biome).
+
+        Kept rather than looked up: food does not move, and reading one
+        value out of the terrain array is expensive enough to notice
+        when it happens several times per cell per turn. The position
+        and the maximum amount are still checked, because the GUI, a
+        restore and the tests can all put a cell down somewhere else,
+        and then the ground under it has to follow."""
+        position = self.position
+        ground = (position[0], position[1], self.maxamount)
+        if ground != self._ground:
+            self._ground = ground
+            self._fertility = fertilityAt(self.infoWorld, position)
+            self._capacity = max(
+                1, int(self.maxamount * self._fertility)
+            )
+        return self._fertility
+
     def capacity(self):
         """the energy this cell can hold: maxamount on average ground,
         more where the biome is fertile and less where it is poor"""
-        return max(
-            1,
-            int(
-                self.maxamount * fertilityAt(self.infoWorld, self.position)
-            ),
-        )
+        self.fertility()
+        return self._capacity
 
     def _EnergyCheck(self):
         WorldObject._EnergyCheck(self)
@@ -248,7 +269,7 @@ class Food(WorldObject):
         if n is None:
             n = self.density()
         season = growthFactor(self.infoWorld)
-        fertility = fertilityAt(self.infoWorld, self.position)
+        fertility = self.fertility()
         # in a hard winter (season < 1) the fertile band narrows, so
         # crowded stands thin out instead of merely growing slower
         width = self.fertileWidth * min(1.0, 0.5 + season)
@@ -282,22 +303,35 @@ class Food(WorldObject):
         seeds at all. A seed starts small and grows slowly, so this is
         what sets how long the pasture takes to spread over the world;
         the density rules alone decide how dense it ends up."""
+        if not self._readyToSeed():
+            return None
+        return self._placeSeed()
+
+    def _readyToSeed(self):
+        """the cheap half of _lifeSeed: is this cell grown enough to try
+        at all this turn? Kept apart from the rest because it is a
+        handful of comparisons that the batch step asks of the whole
+        pasture at once (see stepLifeBatch), while the other half has
+        to touch the world."""
         if self.energy <= 2 * self.seedenergy:
-            return None
+            return False
         if self.energy < self.birthMaturity * self.capacity():
-            return None
+            return False
         rate = self.seedrate * seedingFactor(self.infoWorld)
-        if uniform(0, 1) >= rate * self.energy / self.maxamount:
-            return None
+        return random() < rate * self.energy / self.maxamount
+
+    def _placeSeed(self):
+        """the other half of _lifeSeed: pick a spot within range and put
+        a seed there, if the ground and the local density allow it."""
         target = getRandomPositionInRadius(
             self.position, self.rangeseed, self.infoWorld["length"]
         )
         # a seed takes root more readily on good ground
-        if uniform(0, 1) >= fertilityAt(self.infoWorld, target):
+        if random() >= fertilityAt(self.infoWorld, target):
             return None
         n = self._foodEnergyAround(target) / self.maxamount
         p = _bell(n, self.birthPeak, self.birthWidth)
-        if p <= 0 or uniform(0, 1) >= p:
+        if p <= 0 or random() >= p:
             return None
         self.energy -= self.seedenergy
         infoFood = dict(self.infoObject)
@@ -320,7 +354,130 @@ class Food(WorldObject):
                 self._lifeGrow()
         else:
             if self.age > 10:  # TODO numbers should be a config option
-                if uniform(0, 1) < self.seedrate:
+                if random() < self.seedrate:
                     if not self._hasTooMuchFoodNearby():
                         self.Seed()
             self.Grow()
+
+
+def stepLifeBatch(foods, infoWorld):
+    """runs one turn for a whole pasture of life-rule food at once.
+
+    The life rule is the same arithmetic for every cell - clamp to the
+    local capacity, grow a turn older, maybe seed, grow - and at a few
+    thousand cells the interpreter overhead of doing that one object at
+    a time cost more than everything the wesen do put together. Here it
+    is done for all of them in a handful of numpy operations. The two
+    parts that are not arithmetic, a cell that dies and a cell that
+    seeds, are still handled one at a time: both are rare, and both
+    have to touch the world.
+
+    ``Food.main`` and the scalar methods it calls remain the readable
+    definition of the rule; ``TestLifeBatch`` checks that this agrees
+    with them cell for cell.
+    """
+    living = [food for food in foods if not food.dead]
+    if not living:
+        return
+    field = infoWorld.get("foodfield")
+    if field is None:
+        # no density field to read: let every cell run its own turn
+        for food in living:
+            food.main()
+        return
+
+    n = len(living)
+    energy = np.fromiter((f.energy for f in living), np.float64, n)
+    age = np.fromiter((f.age for f in living), np.int64, n)
+    maxage = np.fromiter((f.maxage for f in living), np.int64, n)
+    maxamount = np.fromiter((f.maxamount for f in living), np.float64, n)
+    growrate = np.fromiter((f.growrate for f in living), np.float64, n)
+    seedrate = np.fromiter((f.seedrate for f in living), np.float64, n)
+    seedenergy = np.fromiter(
+        (f.seedenergy for f in living), np.float64, n
+    )
+    maturity = np.fromiter(
+        (f.birthMaturity for f in living), np.float64, n
+    )
+    peak = np.fromiter((f.fertilePeak for f in living), np.float64, n)
+    spread = np.fromiter((f.fertileWidth for f in living), np.float64, n)
+    # fertility() refreshes the cached capacity, so it is read first
+    fertility = np.fromiter(
+        (f.fertility() for f in living), np.float64, n
+    )
+    capacity = np.fromiter((f._capacity for f in living), np.float64, n)
+    xs = np.fromiter((f.position[0] for f in living), np.intp, n)
+    ys = np.fromiter((f.position[1] for f in living), np.intp, n)
+    alive = np.ones(n, dtype=bool)
+
+    # --- WorldObject.main and Food._EnergyCheck / _AgeCheck ---
+    # a cell is held to the capacity of the ground it stands on, then
+    # grows a turn older, and dies once it is too old
+    if (energy < 0).any():
+        # only reachable by manipulating food through the GUI
+        print("warning: food energy lower than zero detected")
+    np.clip(energy, 0.0, capacity, out=energy)
+    age += 1
+    for i in np.nonzero(age >= maxage)[0].tolist():
+        food = living[i]
+        food.age = int(age[i])
+        food.energy = int(energy[i])
+        food.Die()
+        alive[i] = False
+
+    # --- Food._readyToSeed ---
+    rate = seedrate * seedingFactor(infoWorld)
+    ready = (
+        alive
+        & (energy > 2.0 * seedenergy)
+        & (energy >= maturity * capacity)
+        & (np.random.random(n) < rate * energy / maxamount)
+    )
+    seeders = np.nonzero(ready)[0].tolist()
+    if seeders:
+        for i in seeders:
+            food = living[i]
+            food.age = int(age[i])
+            food.energy = int(energy[i])
+            food._placeSeed()
+            energy[i] = food.energy
+        # a seed can land on a grown cell and swallow it whole, so who
+        # is still alive has to be asked again rather than assumed
+        alive &= np.fromiter((not f.dead for f in living), bool, n)
+
+    # --- Food.growth ---
+    season = growthFactor(infoWorld)
+    density = np.maximum(0.0, field[xs, ys] - energy) / maxamount
+    width = spread * min(1.0, 0.5 + season)
+    safe = np.where(width > 0, width, 1.0)
+    bell = np.maximum(-1.0, 1.0 - ((density - peak) / safe) ** 2)
+    # a width of zero is a spike: exactly at the peak and nowhere else
+    bell = np.where(
+        width > 0, bell, np.where(density == peak, 1.0, -1.0)
+    )
+    relative = energy / (maxamount * fertility)
+    growth = np.where(
+        bell > 0,
+        # only growth follows the season; decay is never slowed by it
+        bell
+        * np.maximum(-1.0, 4.0 * relative * (1.0 - relative))
+        * season
+        * fertility,
+        # decay is proportional to size too, but never stalls
+        bell * np.minimum(1.0, np.maximum(relative, 0.05)),
+    )
+
+    # --- Food._lifeGrow, with stochasticRound over the whole pasture ---
+    delta = growrate * growth * np.random.uniform(0.5, 1.5, n)
+    floor = np.floor(delta)
+    delta = floor + (np.random.random(n) < (delta - floor))
+    delta[~alive] = 0.0
+    energy += delta
+    Food.totalGrown += int(delta.sum())
+
+    for i in np.nonzero(alive)[0].tolist():
+        food = living[i]
+        food.age = int(age[i])
+        food.energy = int(energy[i])
+        if food.energy <= 0:
+            food.Die()

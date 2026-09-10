@@ -1,17 +1,25 @@
 """model and controller for single objects in the simulation"""
 
-from numpy.random import uniform
+from random import random
 
-from ..point import getRandomPosition
+import numpy as np
+
+from ..point import getRandomPosition, ringBlocks
 
 
 def stochasticRound(x):
     """rounds x to an int, with the fractional part deciding the
     probability of rounding up, so the expected value is preserved.
     Used wherever a rate smaller than one energy per turn has to be
-    applied to integer energies (food growth, wesen upkeep)."""
+    applied to integer energies (food growth, wesen upkeep).
+
+    Draws from the standard library rather than from numpy: both are
+    seeded from the game seed (see variation.applySeed), and a single
+    numpy scalar draw costs about seventy times as much as this one,
+    which is worth noticing in a function called once per object per
+    turn."""
     base = int(x // 1)
-    return base + (1 if uniform(0, 1) < (x - base) else 0)
+    return base + (1 if random() < (x - base) else 0)
 
 
 class WorldObject:
@@ -44,30 +52,52 @@ class WorldObject:
 
     def getRangeIterator(self, radius, condition):
         """returns an iterator of pairs (id, object)
-        with all objects from objectIterator in radius
-        that match the condition.
-        The radius is taken in the maximum metric,
-        where norm(v) = max(abs(v[0]),abs(v[1]))"""
-        # HINT: as this is the most time-consuming function,
-        #      timeit-testing has been used to select the
-        #      most efficient implementation here.
-        #      There is still room for improvement.
-        # SEE testradius.py and testrange.py
-        # TODO: apparently this comment is outdated already?
-        x, y = self.position
-        minX = max(0, x - radius)
-        maxX = min(self.infoWorld["length"], x + radius + 1)
-        # +1 since upper bound of range is exclusive
-        minY = max(0, y - radius)
-        maxY = min(self.infoWorld["length"], y + radius + 1)
-        # print(minX, maxX, maxY, maxY, self.infoWorld["length"]);
-        return (
-            (i, o)
-            for x1 in range(minX, maxX)
-            for y1 in range(minY, maxY)
-            for (i, o) in self.map[x1][y1].items()
-            if (condition is None or condition(o))
-        )
+        with all objects in radius that match the condition.
+
+        The radius is taken in the maximum metric on the torus, where
+        norm(v) = max(abs(v[0]),abs(v[1])) and both coordinates wrap
+        around the edge of the world - exactly as movement does, so a
+        wesen standing on the seam sees the ground it is about to walk
+        onto."""
+        length = self.infoWorld["length"]
+        x = self.position[0] % length
+        y = self.position[1] % length
+        grid = self.map
+        if radius <= 0:
+            cells = (grid[x][y],)
+        else:
+            cells = self._occupiedCells(x, y, radius, length)
+        for cell in cells:
+            # a listener may act on what it hears (Broadcast reaches
+            # source code, which can move or attack), so the cell is
+            # read as it stands rather than iterated live
+            for i, o in list(cell.items()):
+                if condition is None or condition(o):
+                    yield i, o
+
+    def _occupiedCells(self, x, y, radius, length):
+        """the cells of the window around (x, y) that hold anything.
+
+        A look window is a square of side 2*radius+1 on a torus, so it
+        is covered by at most four rectangular blocks of the map. Asking
+        the world's occupancy grid which cells of a block are non-empty
+        costs one numpy call per block and skips the thousands of empty
+        cells the window would otherwise walk one at a time, which is
+        what used to make looking around the most expensive thing in the
+        game by a wide margin."""
+        counts = self.infoWorld["counts"]
+        grid = self.map
+        cells = []
+        for x0, x1 in ringBlocks(x, radius, length):
+            rows = counts[x0:x1]
+            for y0, y1 in ringBlocks(y, radius, length):
+                xs, ys = np.nonzero(rows[:, y0:y1])
+                if xs.size:
+                    for cx, cy in zip(
+                        (xs + x0).tolist(), (ys + y0).tolist()
+                    ):
+                        cells.append(grid[cx][cy])
+        return cells
 
     def Die(self):
         """deletes WorldObject instance from world."""

@@ -288,6 +288,150 @@ class TestFoodSpread(unittest.TestCase):
         self.assertLess(food.energy, food.birthMaturity * food.capacity())
 
 
+class TestLifeBatch(unittest.TestCase):
+    """The life rule is run for the whole pasture at once, with numpy,
+    rather than one cell at a time (see food.stepLifeBatch). The scalar
+    methods stay the readable definition of the rule, so the batch has
+    to agree with them."""
+
+    def pasture(self, **over):
+        """a world holding both kinds of cell: scattered ones, which
+        have room to grow, and one tight clump, which is crowded enough
+        to decay. Both signs of the growth curve are then covered."""
+        world = makeWorld(
+            world={"length": 200, "seed": 11},
+            food={"count": 60, **over},
+            biome={"enable": True, "strength": 0.5},
+            climate={"enable": True},
+        )
+        world.climate.step(7)
+        infoFood = dict(world.infoAllWorld["food"])
+        for n in range(15):
+            world.AddObject(
+                dict(infoFood, position=[20 + n % 4, 20 + n // 4])
+            )
+        cells = [
+            o for o in world.objects.values() if o.objectType == "food"
+        ]
+        for n, cell in enumerate(cells):
+            # a spread of sizes, so both halves of the logistic growth
+            # curve are covered; the initial food is given a random age
+            cell.age = 0
+            cell.energy = min(1 + (n * 7) % 120, cell.capacity())
+        world.updateFoodField()
+        return world, cells
+
+    def pinDraws(self, chance=1.0, jitter=1.0):
+        """makes every draw the batch takes come out at a known value,
+        so what is left of it is the rule itself. A chance of 1.0 passes
+        no probability below one: nothing seeds and nothing rounds up."""
+        import numpy as np
+
+        realRandom, realUniform = np.random.random, np.random.uniform
+        np.random.random = lambda n: np.full(n, chance)
+        np.random.uniform = lambda low, high, n: np.full(n, jitter)
+        self.addCleanup(setattr, np.random, "random", realRandom)
+        self.addCleanup(setattr, np.random, "uniform", realUniform)
+
+    def test_both_signs_of_the_rule_are_exercised(self):
+        """the equivalence test below is only worth something if the
+        pasture holds cells that grow and cells that decay"""
+        _, cells = self.pasture()
+        self.assertEqual(
+            {cell.growth() > 0 for cell in cells}, {True, False}
+        )
+
+    def test_growth_matches_the_scalar_rule(self):
+        from math import floor
+
+        from Wesen.objects.food import stepLifeBatch
+
+        world, cells = self.pasture()
+        self.pinDraws()
+        expected = {
+            id(cell): cell.energy
+            + floor(cell.growrate * cell.growth() * 1.0)
+            for cell in cells
+        }
+        self.assertTrue(any(v != 0 for v in expected.values()))
+        stepLifeBatch(cells, world.infoAllWorld["world"])
+        for cell in cells:
+            want = expected[id(cell)]
+            if want <= 0:
+                self.assertTrue(
+                    cell.dead, "a cell grown down to nothing still lives"
+                )
+                continue
+            self.assertFalse(cell.dead)
+            self.assertEqual(cell.energy, want)
+            self.assertEqual(cell.age, 1)
+
+    def test_a_cell_is_held_to_the_capacity_of_its_ground(self):
+        from Wesen.objects.food import stepLifeBatch
+
+        world, cells = self.pasture()
+        self.pinDraws()
+        cell = cells[0]
+        cell.energy = cell.capacity() * 10
+        stepLifeBatch([cell], world.infoAllWorld["world"])
+        self.assertLessEqual(cell.energy, cell.capacity())
+
+    def test_a_cell_dies_of_old_age_in_the_batch(self):
+        from Wesen.objects.food import stepLifeBatch
+
+        world, cells = self.pasture()
+        old = cells[0]
+        old.age = old.maxage - 1
+        stepLifeBatch(cells, world.infoAllWorld["world"])
+        self.assertTrue(old.dead)
+        self.assertNotIn(id(old), world.objects)
+
+    def test_the_batch_still_seeds(self):
+        from Wesen.objects.food import stepLifeBatch
+
+        world, _ = self.pasture(seedrate=1.0)
+        before = len(world.objects)
+        for _ in range(10):
+            world.updateFoodField()
+            stepLifeBatch(
+                [
+                    o
+                    for o in list(world.objects.values())
+                    if o.objectType == "food"
+                ],
+                world.infoAllWorld["world"],
+            )
+        self.assertGreater(len(world.objects), before)
+
+    def test_food_eaten_by_a_wesen_does_not_also_take_its_turn(self):
+        """the world snapshots the food before the wesen act, so a cell
+        eaten in between has to be skipped rather than grown"""
+        world, cells = self.pasture()
+        victim = cells[0]
+        victim.Die()
+        world.stepFood(cells)
+        self.assertTrue(victim.dead)
+        self.assertNotIn(id(victim), world.objects)
+
+    def test_the_occupancy_grid_stays_in_step_with_the_map(self):
+        """every range scan trusts the grid, so a cell that is added,
+        moved or removed without it is an object that stops existing"""
+        import numpy as np
+
+        world, _ = self.pasture()
+        info = dict(world.infoAllWorld["wesen"])
+        info.update({"source": "DrunkenSailor", "energy": 400})
+        for _ in range(6):
+            world.AddObject(dict(info))
+        for _ in range(25):
+            world.main()
+        counted = np.array(
+            [[len(cell) for cell in row] for row in world.map]
+        )
+        self.assertTrue((counted == world.counts).all())
+        self.assertEqual(int(counted.sum()), len(world.objects))
+
+
 class TestHardening(unittest.TestCase):
     def brokenWorld(self, exception):
         import Wesen.sources.DrunkenSailor.main as source
@@ -459,12 +603,13 @@ class TestMessages(unittest.TestCase):
     within look range, because its range filter closed over the loop
     variable of the loop it was filtering."""
 
-    def makeTwo(self, distance):
+    def makeTwo(self, distance, where=10):
         world = makeWorld(world={"length": 60}, food={"count": 0})
+        length = world.infoAllWorld["world"]["length"]
         info = dict(world.infoAllWorld["wesen"])
         info.update({"source": "GreatRabbit", "position": [10, 10]})
-        speaker = world.AddObject(dict(info, position=[10, 10]))
-        info["position"] = [10, 10 + distance]
+        speaker = world.AddObject(dict(info, position=[10, where]))
+        info["position"] = [10, (where + distance) % length]
         listener = world.AddObject(dict(info))
         heard = []
         listener.wesenSource.Receive = lambda m: heard.append(m)
@@ -478,9 +623,19 @@ class TestMessages(unittest.TestCase):
         self.assertEqual(heard, [{"hello": 1}])
 
     def test_talk_does_not_reach_beyond_look_range(self):
-        speaker, listener, heard = self.makeTwo(40)
+        # 30 apart in a world of 60 is the farthest two wesen can be:
+        # any smaller gap would be within look range the short way round
+        speaker, listener, heard = self.makeTwo(30)
         self.assertFalse(speaker.Talk(id(listener), {"hello": 1}))
         self.assertEqual(heard, [])
+
+    def test_talk_reaches_across_the_seam(self):
+        """the world is a torus for looking as well as for walking, so
+        the edge of the map is not a wall to talk over"""
+        speaker, listener, heard = self.makeTwo(5, where=58)
+        self.assertEqual(listener.position, [10, 3])
+        self.assertTrue(speaker.Talk(id(listener), {"hello": 1}))
+        self.assertEqual(heard, [{"hello": 1}])
 
     def test_broadcast_reaches_everybody_in_talk_range(self):
         speaker, listener, heard = self.makeTwo(5)

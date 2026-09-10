@@ -36,3 +36,21 @@ def getDistInMaxMetric(a, b, length):  # TODO move to helper
     """takes ((ax,ay),(bx,by),length),
     computes distance from a to b."""
     return abs(max(getShortestTranslation(a, b, length), key=abs))
+
+
+def ringBlocks(centre, radius, length):
+    """the pieces of one axis covered by [centre-radius, centre+radius]
+    on a ring of the given length, as (start, stop) pairs.
+
+    The world is a torus, so a window near the edge continues on the
+    other side and is then two pieces rather than one. Returning slice
+    bounds instead of a list of coordinates is what lets the caller cut
+    the occupancy grid into whole blocks and hand them to numpy."""
+    span = 2 * radius + 1
+    if span >= length:
+        return ((0, length),)
+    low = (centre - radius) % length
+    high = low + span
+    if high <= length:
+        return ((low, high),)
+    return ((low, length), (0, high - length))

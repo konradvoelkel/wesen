@@ -9,7 +9,7 @@ from . import isolation
 from .biome import Biome
 from .climate import Climate
 from .defaults import CONFIG_DEFAULTS, DEFAULT_GAME_STATE_FILE
-from .objects.food import Food
+from .objects.food import Food, stepLifeBatch
 from .objects.wesen import RuleException, Wesen
 
 
@@ -63,6 +63,12 @@ class World:
         # object array is about three times slower than a nested list,
         # which matters because the range iterators are the hot loop
         self.map = [[{} for _ in range(length)] for _ in range(length)]
+        # how many objects stand on each cell, kept in step with the map
+        # by AddObject, DeleteObject and UpdatePos. This is what lets a
+        # range scan ask numpy for the handful of occupied cells in a
+        # window instead of walking every cell of it (see
+        # WorldObject._occupiedCells)
+        self.counts = np.zeros((length, length), dtype=np.int32)
         # is initialized depending on sources in initStats()
         self.infoAllWorld["world"].update(
             {
@@ -71,6 +77,7 @@ class World:
                 "UpdatePos": self.UpdatePos,
                 "objects": self.objects,
                 "map": self.map,
+                "counts": self.counts,
             }
         )
         self.infoAllWorld["food"]["type"] = "food"
@@ -127,6 +134,7 @@ class World:
         """removes an object from the world."""
         pos = self.objects[objectid].position
         del self.map[pos[0]][pos[1]][objectid]
+        self.counts[pos[0], pos[1]] -= 1
         del self.objects[objectid]
         self.callbacks.get("DeleteObject", lambda _id: None)(objectid)
         return True
@@ -151,6 +159,7 @@ class World:
         self.map[newObject.position[0]][newObject.position[1]][
             id(newObject)
         ] = newObject
+        self.counts[newObject.position[0], newObject.position[1]] += 1
         self.callbacks.get("AddObject", lambda _id, obj: None)(
             id(newObject), newObject.getDescriptor()
         )
@@ -159,8 +168,10 @@ class World:
     def UpdatePos(self, _id, oldPos, obj):
         """updates the map about an objects position"""
         del self.map[oldPos[0]][oldPos[1]][_id]
+        self.counts[oldPos[0], oldPos[1]] -= 1
         newPos = obj["position"]
         self.map[newPos[0]][newPos[1]][_id] = self.objects[_id]
+        self.counts[newPos[0], newPos[1]] += 1
         self.callbacks.get("UpdatePos", lambda _id, obj: None)(_id, obj)
 
     def updateFoodField(self):
@@ -173,20 +184,48 @@ class World:
             return
         length = self.infoAllWorld["world"]["length"]
         r = self.infoAllWorld["range"]["seed"]
-        grid = np.zeros((length, length))
-        for o in self.objects.values():
-            if o.objectType == "food":
-                grid[o.position[0], o.position[1]] += o.energy
-        # box sum via 2D prefix sums; pad by r+1 on the low side and r
-        # on the high side, so the box never leaves the array
-        padded = np.pad(grid, ((r + 1, r), (r + 1, r)))
-        s = padded.cumsum(0).cumsum(1)
-        field = (
-            s[2 * r + 1 :, 2 * r + 1 :]
-            - s[: -2 * r - 1, 2 * r + 1 :]
-            - s[2 * r + 1 :, : -2 * r - 1]
-            + s[: -2 * r - 1, : -2 * r - 1]
+        cells = [
+            o for o in self.objects.values() if o.objectType == "food"
+        ]
+        count = len(cells)
+        energies = np.fromiter(
+            (o.energy for o in cells), np.float64, count
         )
+        total = float(energies.sum())
+        # every energy is a whole number, so as long as the whole
+        # pasture stays well inside the range where a float32 counts
+        # integers exactly, the prefix sums below are exact in it and
+        # cost about a third of what they cost in double precision
+        dtype = np.float32 if total < 2**23 else np.float64
+        grid = np.bincount(
+            np.fromiter(
+                (o.position[0] * length + o.position[1] for o in cells),
+                np.intp,
+                count,
+            ),
+            weights=energies,
+            minlength=length * length,
+        ).reshape(length, length)
+        # box sum via 2D prefix sums; pad by r+1 on the low side and r
+        # on the high side, so the box never leaves the array. The world
+        # is a torus and food seeds across the seam, so the padding
+        # wraps too: without it the edges would look like empty ground
+        # and the density rules would read them as room to grow
+        padded = np.pad(
+            grid.astype(dtype, copy=False),
+            ((r + 1, r), (r + 1, r)),
+            mode="wrap",
+        )
+        s = padded.cumsum(0, dtype=dtype)
+        s.cumsum(1, dtype=dtype, out=s)
+        low = slice(None, -2 * r - 1)
+        high = slice(2 * r + 1, None)
+        # written in place after the first subtraction: the whole point
+        # of this function is to touch the map once instead of once per
+        # food cell, and the temporaries were most of what was left
+        field = s[high, high] - s[low, high]
+        field -= s[high, low]
+        field += s[low, low]
         self.infoAllWorld["world"]["foodfield"] = field
 
     def checkSharedState(self):
@@ -272,6 +311,7 @@ class World:
         }
         d["world"].pop("Debug", None)
         d["world"].pop("map", None)
+        d["world"].pop("counts", None)
         d["world"].pop("DeleteObject", None)
         d["world"].pop("AddObject", None)
         d["world"].pop("objects", None)
@@ -287,7 +327,14 @@ class World:
         if "climatestate" in obj:
             self.climate.restore(obj["climatestate"])
             self.climate.step(self.turns)
-        self.objects = {}
+        # emptied in place: the map and the occupancy grid are published
+        # in infoAllWorld and held by every object already built, so
+        # they have to stay the same two objects
+        self.objects.clear()
+        for row in self.map:
+            for cell in row:
+                cell.clear()
+        self.counts[:] = 0
         for infoObj in obj["objects"]:
             newObj = self.AddObject(infoObj)
             newObj.restore(infoObj)
@@ -304,6 +351,35 @@ class World:
         self.setInfoAllWorld(obj)
         self.restore(obj)
 
+    def stepFood(self, food):
+        """the food half of a turn.
+
+        The life rule is the same arithmetic for every cell, so the
+        whole pasture is stepped at once (see food.stepLifeBatch); a
+        few thousand cells taking their turns one at a time used to
+        cost as much as everything the wesen do. Anything else still
+        runs object by object."""
+        batched = []
+        for o in food:
+            if o.dead:
+                # eaten while the wesen were taking their turns
+                continue
+            if o.rule == "life":
+                batched.append(o)
+                continue
+            try:
+                o.main()
+            except Exception as exc:  # noqa: BLE001
+                self.noteFault(o, exc, rule=False)
+        if not batched:
+            return
+        try:
+            stepLifeBatch(batched, self.infoAllWorld["world"])
+        except Exception as exc:  # noqa: BLE001
+            # a bug in here is the engine's, not a player's, but it
+            # still must not end the game for everybody
+            self.noteFault(batched[0], exc, rule=False)
+
     def main(self):
         """runs one turn of Game code (and all objects code, including the AI)"""
         self.turns += 1
@@ -313,9 +389,12 @@ class World:
         self.updateFoodField()
         if self.turns % 50 == 0:
             self.checkSharedState()
-        # in the following, the self.objects.copy() is inevitable,
-        # as the o.main() might modify self.objects.
-        for o in self.objects.copy().values():
+        # the snapshot is inevitable, as a turn adds and removes
+        # objects; taking it up front is also what keeps an object born
+        # this turn from acting in it
+        wesen = []
+        food = []
+        for o in list(self.objects.values()):
             if o.objectType == "wesen":
                 # a restored game may hold wesen of a source that is not
                 # in this config's list, so the entry is made on demand
@@ -325,10 +404,12 @@ class World:
                 counts["count"] += 1
                 counts["energy"] += o.energy
                 counts["upkeep"] += o.lastUpkeep
-                # stillActive = True;
+                wesen.append(o)
             else:
                 stats["food"]["count"] += 1
                 stats["food"]["energy"] += o.energy
+                food.append(o)
+        for o in wesen:
             try:
                 o.main()
             except RuleException as exc:
@@ -338,6 +419,7 @@ class World:
                 # the source (or the engine) has a bug: skip its turn,
                 # never end the game for the other players
                 self.noteFault(o, exc, rule=False)
+        self.stepFood(food)
         stats["global"] = {
             "count": len(self.objects),
             "energy": sum(
