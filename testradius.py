@@ -201,9 +201,9 @@ def test_times():
             )
         )
         results.append((funcname, min_time * 1000))
-    print("%26s -- time consumption in milliseconds" % ("implementation"))
-    for result in sorted(results, key=lambda r: r[1]):
-        print("%26s -- %5.0f" % result)
+    print(f"{'implementation':>26} -- time consumption in milliseconds")
+    for name, milliseconds in sorted(results, key=lambda r: r[1]):
+        print(f"{name:>26} -- {milliseconds:5.0f}")
 
 
 if __name__ == "__main__":

@@ -194,9 +194,7 @@ class Graph(GuiObject):
         """adds current world.stats as data point to all sensors."""
         for sensorInfo, data in zip(self.sensors, self.history):
             try:
-                value = sensorInfo["f"](self.world)(
-                    sensorInfo["statskey"]
-                )
+                value = sensorInfo["f"](self.world)(sensorInfo["statskey"])
             except Exception:
                 # a broken sensor must not stop the game
                 value = 0
@@ -239,8 +237,10 @@ class Graph(GuiObject):
                 mode["name"], self.mode + 1, len(GRAPH_MODES)
             )
         )
-        scale = "one shared scale" if mode["scale"] == "shared" else (
-            "each curve on its own scale"
+        scale = (
+            "one shared scale"
+            if mode["scale"] == "shared"
+            else ("each curve on its own scale")
         )
         p.Print("\n")
         p.Print(f"  {scale}")

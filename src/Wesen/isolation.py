@@ -336,7 +336,7 @@ class Genes:
         return out
 
 
-_genes = {}
+_genes: dict[type, Genes] = {}
 
 
 def prepare(cls, mode=DEFAULT_MODE):

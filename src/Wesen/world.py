@@ -1,9 +1,9 @@
 """The world in which Wesen takes place"""
 
-import numpy as np
-
 import json
 import traceback
+
+import numpy as np
 
 from . import isolation
 from .biome import Biome
@@ -36,10 +36,9 @@ class World:
         """sets the infoAllWorld and initializes member variables"""
         # copy everything that will be modified
         self.infoAllWorld = infoAllWorld.copy()
-        self.infoAllWorld.update({
-            k: infoAllWorld[k].copy()
-            for k in ("wesen", "world", "food")
-        })
+        self.infoAllWorld.update(
+            {k: infoAllWorld[k].copy() for k in ("wesen", "world", "food")}
+        )
         # config files written before seasons or biomes existed have
         # neither section
         for section in ("climate", "biome"):
@@ -258,9 +257,7 @@ class World:
         breaking a game rule rather than crashing."""
         source = getattr(obj, "source", "?")
         kind = "rule violation" if rule else "error"
-        counts = self.faults.setdefault(
-            source, {"rule": 0, "error": 0}
-        )
+        counts = self.faults.setdefault(source, {"rule": 0, "error": 0})
         counts["rule" if rule else "error"] += 1
         key = (source, kind, str(exc))
         if key in self.reported:

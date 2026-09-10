@@ -119,8 +119,7 @@ def describe(name):
     """where a source of this name was looked for, for an error
     message: every search directory, and then the game's own."""
     places = [
-        f"  {join(directory, name)}/main.py or "
-        f"{join(directory, name)}.py"
+        f"  {join(directory, name)}/main.py or {join(directory, name)}.py"
         for directory in _searchPath
     ]
     places.append(f"  the sources shipped with the game ({name})")

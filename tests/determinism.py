@@ -79,9 +79,7 @@ def playAndDigest(seed=SEED, sources=SOURCES, turns=TURNS, preload=False):
         (name, entry["count"], entry["energy"])
         for name, entry in world.stats.items()
     )
-    return hashlib.sha256(
-        repr((state, stats)).encode()
-    ).hexdigest()
+    return hashlib.sha256(repr((state, stats)).encode()).hexdigest()
 
 
 RUNNER = """

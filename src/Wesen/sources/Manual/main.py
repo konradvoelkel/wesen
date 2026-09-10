@@ -44,7 +44,7 @@ class Completer:
         matches = self.method_matches(text)
         try:
             return matches[state]
-        except:
+        except IndexError:
             return None
 
     def method_matches(self, text):

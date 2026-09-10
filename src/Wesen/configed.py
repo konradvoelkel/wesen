@@ -5,8 +5,8 @@ See also:
  strings.py for explanations used here,
  defaults.py for defaults used here."""
 
-# import the correct version of ConfigParser:
-from sys import version_info
+import os.path
+from configparser import ConfigParser, NoOptionError, NoSectionError
 
 from .defaults import CONFIG_DEFAULTS, CONFIG_OPTIONS
 from .strings import (
@@ -16,21 +16,13 @@ from .strings import (
     STRING_MESSAGE_WROTE,
 )
 
-if version_info.major == 3 and version_info.minor < 2:  # pre version 3.2
-    from configparser import SafeConfigParser
-else:  # up to date version
-    from configparser import ConfigParser as SafeConfigParser
-
-import os.path
-from configparser import NoOptionError, NoSectionError
-
 
 class ConfigEd:
     """ConfigEd(filename) creates a full powered config editor for wesen"""
 
     def __init__(self, filename):
         self.configfile = filename
-        self.configParser = SafeConfigParser()
+        self.configParser = ConfigParser()
         self.alwaysDefaults = False
 
     def printConfig(self):
@@ -71,13 +63,13 @@ class ConfigEd:
         calls the appropriate getter from self.configParser"""
         value = None
         try:
-            if entryType == str:
+            if entryType is str:
                 value = self.configParser.get(section, key)
-            elif entryType == int:
+            elif entryType is int:
                 value = self.configParser.getint(section, key)
-            elif entryType == bool:
+            elif entryType is bool:
                 value = self.configParser.getboolean(section, key)
-            elif entryType == float:
+            elif entryType is float:
                 value = self.configParser.getfloat(section, key)
         except (NoOptionError, NoSectionError):
             # option added after the config file was written

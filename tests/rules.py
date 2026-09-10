@@ -92,7 +92,9 @@ class TestVariation(unittest.TestCase):
                 for key in keys:
                     old, new = before[section][key], config[section][key]
                     self.assertIsInstance(new, type(old))
-                    self.assertGreaterEqual(new, 1 if isinstance(old, int) else 0)
+                    self.assertGreaterEqual(
+                        new, 1 if isinstance(old, int) else 0
+                    )
                     self.assertLessEqual(new, old * 1.2 + 1)
                     self.assertGreaterEqual(new, old * 0.8 - 1)
 
@@ -436,9 +438,7 @@ class TestHardening(unittest.TestCase):
     def brokenWorld(self, exception):
         import Wesen.sources.DrunkenSailor.main as source
 
-        world = makeWorld(
-            world={"length": 60}, food={"count": 5}
-        )
+        world = makeWorld(world={"length": 60}, food={"count": 5})
         info = dict(world.infoAllWorld["wesen"])
         info["source"] = "DrunkenSailor"
         info["energy"] = 500
@@ -535,9 +535,7 @@ class TestMetabolism(unittest.TestCase):
         small = self.wesen(100)
         big = self.wesen(10000)
         self.assertGreater(big.upkeep(), small.upkeep())
-        self.assertAlmostEqual(
-            big.upkeep(), 1 + 0.005 * 10000, places=6
-        )
+        self.assertAlmostEqual(big.upkeep(), 1 + 0.005 * 10000, places=6)
 
     def test_flat_upkeep_when_rate_is_zero(self):
         w = self.wesen(5000, upkeep_rate=0.0, upkeep=1)
@@ -588,9 +586,7 @@ class TestPersistenceOfNewState(unittest.TestCase):
         self.assertNotIn("climate", d["world"])
         other = World(d, createObjects=False)
         other.restore(d)
-        self.assertEqual(
-            other.climate.persist(), world.climate.persist()
-        )
+        self.assertEqual(other.climate.persist(), world.climate.persist())
         self.assertEqual(
             other.climateState()["growth"],
             world.climateState()["growth"],
@@ -769,9 +765,7 @@ class TestSharedState(unittest.TestCase):
         # ... and the season is still live under the view
         before = source.infoWorld["climate"]["growth"]
         world.climate.state["growth"] = before + 1
-        self.assertEqual(
-            source.infoWorld["climate"]["growth"], before + 1
-        )
+        self.assertEqual(source.infoWorld["climate"]["growth"], before + 1)
 
     def test_a_message_may_not_carry_a_live_object(self):
         world = makeWorld(world={"length": 60}, food={"count": 0})

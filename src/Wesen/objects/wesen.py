@@ -473,9 +473,9 @@ class Wesen(WorldObject):
         energy. Holding a big body therefore costs, which limits both
         hoarding and unchecked population growth."""
         info = self.infoObject
-        return info.get("upkeep", 1) + info.get(
-            "upkeep_rate", 0.0
-        ) * max(0, self.energy)
+        return info.get("upkeep", 1) + info.get("upkeep_rate", 0.0) * max(
+            0, self.energy
+        )
 
     def main(self):
         """runs one turn of wesen code and it's AI code"""

@@ -1,6 +1,5 @@
 """The basic OpenGL GUI code"""
 
-import os
 import sys
 import traceback
 
@@ -25,6 +24,8 @@ from OpenGL.GL import (
     glViewport,
 )
 from OpenGL.GLUT import (
+    GLUT_ACTION_GLUTMAINLOOP_RETURNS,
+    GLUT_ACTION_ON_WINDOW_CLOSE,
     GLUT_DOUBLE,
     GLUT_ELAPSED_TIME,
     GLUT_RGB,
@@ -41,11 +42,9 @@ from OpenGL.GLUT import (
     glutMouseFunc,
     glutPostRedisplay,
     glutReshapeFunc,
+    glutSetOption,
     glutSpecialFunc,
     glutSwapBuffers,
-    glutSetOption,
-    GLUT_ACTION_ON_WINDOW_CLOSE,
-    GLUT_ACTION_GLUTMAINLOOP_RETURNS
 )
 
 from ..strings import VERSIONSTRING
@@ -151,7 +150,10 @@ class BasicGUI:
         glutInit(extraArgs.split(" "))
         glutCreateWindow(VERSIONSTRING.encode("ascii"))
         if bool(glutSetOption):
-            glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_GLUTMAINLOOP_RETURNS)
+            glutSetOption(
+                GLUT_ACTION_ON_WINDOW_CLOSE,
+                GLUT_ACTION_GLUTMAINLOOP_RETURNS,
+            )
         glutDisplayFunc(self.Draw)
         glutIdleFunc(glutPostRedisplay)
         glutReshapeFunc(self.Reshape)
@@ -166,11 +168,13 @@ class BasicGUI:
         """Stop the simulation and quit"""
         glFinish()
         self.world.DumpGameState()
-        try: # this might not work in Windows
+        try:  # this might not work in Windows
             from OpenGL.GLUT import glutLeaveMainLoop
+
             glutLeaveMainLoop()
-        except Exception: # Fallback for systems running legacy GLUT without FreeGLUT extensions
+        except Exception:  # Fallback for systems running legacy GLUT without FreeGLUT extensions
             import os
+
             os._exit(0)
 
     def Pause(self):

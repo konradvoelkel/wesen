@@ -78,9 +78,10 @@ def lookForTarget(
 def acceptableFood(self, o):
     """ripe food; when below fighting energy also bites that leave the
     food alive; when starving anything above minimumEnergyToEat"""
-    ok = self.foodWanted(
-        o, hungry=self.minimumEnergyToFight, starving=50
-    ) and self.foodYield(o) >= self.minimumEnergyToEat
+    ok = (
+        self.foodWanted(o, hungry=self.minimumEnergyToFight, starving=50)
+        and self.foodYield(o) >= self.minimumEnergyToEat
+    )
     if ok and o["id"] in self.forbiddenTargets:
         del self.forbiddenTargets[self.forbiddenTargets.index(o["id"])]
     return ok

@@ -40,7 +40,7 @@ class DefaultWesenSource:
     # food dicts are the entries of closerLook() (they carry "energy").
 
     def foodRule(self):
-        """"classic" or "life", see objects/food.py"""
+        """ "classic" or "life", see objects/food.py"""
         return self.infoFood.get("rule", "classic")
 
     def foodRoots(self):
@@ -180,9 +180,10 @@ class DefaultWesenSource:
 
     def minBirthEnergy(self):
         """own energy needed for Reproduce() to succeed at all"""
-        return 2 * max(
-            1, self.infoWesen.get("child_min_energy", 1)
-        ) + self.birthCost()
+        return (
+            2 * max(1, self.infoWesen.get("child_min_energy", 1))
+            + self.birthCost()
+        )
 
     def plantEnergy(self):
         """energy to Vomit() for a viable patch: 1 under the classic

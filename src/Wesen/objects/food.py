@@ -145,9 +145,7 @@ class Food(WorldObject):
     def Grow(self):
         """increment energy by some amount (classic rule)."""
         rate = (
-            self.growrate
-            * growthFactor(self.infoWorld)
-            * self.fertility()
+            self.growrate * growthFactor(self.infoWorld) * self.fertility()
         )
         self.energy += int(uniform(0, 2) * rate)
 
@@ -181,9 +179,7 @@ class Food(WorldObject):
         if ground != self._ground:
             self._ground = ground
             self._fertility = fertilityAt(self.infoWorld, position)
-            self._capacity = max(
-                1, int(self.maxamount * self._fertility)
-            )
+            self._capacity = max(1, int(self.maxamount * self._fertility))
         return self._fertility
 
     def capacity(self):
@@ -393,18 +389,14 @@ def stepLifeBatch(foods, infoWorld):
     maxamount = np.fromiter((f.maxamount for f in living), np.float64, n)
     growrate = np.fromiter((f.growrate for f in living), np.float64, n)
     seedrate = np.fromiter((f.seedrate for f in living), np.float64, n)
-    seedenergy = np.fromiter(
-        (f.seedenergy for f in living), np.float64, n
-    )
+    seedenergy = np.fromiter((f.seedenergy for f in living), np.float64, n)
     maturity = np.fromiter(
         (f.birthMaturity for f in living), np.float64, n
     )
     peak = np.fromiter((f.fertilePeak for f in living), np.float64, n)
     spread = np.fromiter((f.fertileWidth for f in living), np.float64, n)
     # fertility() refreshes the cached capacity, so it is read first
-    fertility = np.fromiter(
-        (f.fertility() for f in living), np.float64, n
-    )
+    fertility = np.fromiter((f.fertility() for f in living), np.float64, n)
     capacity = np.fromiter((f._capacity for f in living), np.float64, n)
     xs = np.fromiter((f.position[0] for f in living), np.intp, n)
     ys = np.fromiter((f.position[1] for f in living), np.intp, n)
@@ -452,9 +444,7 @@ def stepLifeBatch(foods, infoWorld):
     safe = np.where(width > 0, width, 1.0)
     bell = np.maximum(-1.0, 1.0 - ((density - peak) / safe) ** 2)
     # a width of zero is a spike: exactly at the peak and nowhere else
-    bell = np.where(
-        width > 0, bell, np.where(density == peak, 1.0, -1.0)
-    )
+    bell = np.where(width > 0, bell, np.where(density == peak, 1.0, -1.0))
     relative = energy / (maxamount * fertility)
     growth = np.where(
         bell > 0,

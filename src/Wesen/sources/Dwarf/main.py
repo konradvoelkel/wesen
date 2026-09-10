@@ -95,8 +95,7 @@ class WesenSource(DefaultWesenSource):
                                 helper.ScannerMove(
                                     self,
                                     scanVector=[
-                                        -c
-                                        for c in self.globalScanVector
+                                        -c for c in self.globalScanVector
                                     ],
                                 )
             if self.time() == timeBefore:

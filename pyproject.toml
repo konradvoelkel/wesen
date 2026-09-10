@@ -31,10 +31,33 @@ target-version = "py312"
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "Q", "I", "UP"]
+ignore = [
+    # How wide code is, is `ruff format`'s business, and it is run in
+    # CI. What E501 has left to complain about is prose in comments and
+    # docstrings, and breaking a sentence to fit a column makes it
+    # harder to read rather than easier.
+    "E501",
+]
+
+[tool.ruff.format]
+# The formatter reaches into Python blocks inside Markdown, and the
+# skeletons in SOURCES.md are laid out to be read rather than to be
+# run: one line per method, so the shape of a source fits on a screen.
+exclude = ["*.md"]
+
+[tool.ruff.lint.per-file-ignores]
+# OpenGL.ERROR_ON_COPY must be set before the GL submodules are
+# imported, so these imports cannot come first.
+"src/Wesen/gui/map.py" = ["E402"]
 
 [tool.mypy]
 strict = false
 warn_unused_configs = true
+# A source is a player's own program, not part of the engine. It is
+# held to the rules of the game, which the engine enforces and reports
+# (see isolation.py and World.noteFault), not to the engine's type
+# discipline: somebody's first wesen should not have to satisfy mypy.
+exclude = "^src/Wesen/sources/"
 
 [[tool.mypy.overrides]]
 module = "OpenGL.*"

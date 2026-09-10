@@ -72,9 +72,11 @@ class Biome:
         """fertility of one cell (1.0 when biomes are switched off)"""
         if self.field is None:
             return 1.0
-        return float(self.field[position[0] % self.length][
-            position[1] % self.length
-        ])
+        return float(
+            self.field[position[0] % self.length][
+                position[1] % self.length
+            ]
+        )
 
     def describe(self):
         """min/mean/max, for the tuning scripts"""

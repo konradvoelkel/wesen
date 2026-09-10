@@ -47,8 +47,8 @@ class Text(GuiObject):
         p = self.printer
         p.Print("paused" if self.gui.pause else "running")
         p.Print(
-            "\n\n\n%3.1f fps,  %8d turns\n"
-            % (self.gui.fps, self.world.turns)
+            f"\n\n\n{self.gui.fps:3.1f} fps,  "
+            f"{self.world.turns:8d} turns\n"
         )
         climate = self.world.climateState()
         if climate.get("enable"):

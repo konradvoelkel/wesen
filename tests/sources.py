@@ -110,9 +110,7 @@ class TestWhereASourceMayLive(SourceTestCase):
         world = self.play(name)
         self.assertEqual(world.faults, {})
         played = [
-            o
-            for o in world.objects.values()
-            if o.objectType == "wesen"
+            o for o in world.objects.values() if o.objectType == "wesen"
         ]
         self.assertTrue(
             all(o.wesenSource.noted for o in played),
@@ -192,9 +190,7 @@ class TestIsolationOfPlayerSources(SourceTestCase):
     def test_a_single_file_source_is_isolated_under_its_own_name(self):
         name = self.writeFile(self.newName())
         self.play(name)
-        self.assertEqual(
-            isolation.sharing().get(name), ["remembered"]
-        )
+        self.assertEqual(isolation.sharing().get(name), ["remembered"])
 
     def test_wesen_of_a_player_source_do_not_share_a_class_attribute(self):
         name = self.writeFile(self.newName())

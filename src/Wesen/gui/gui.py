@@ -8,6 +8,7 @@ as this code only adds features on top:
 """
 
 import traceback
+from os.path import abspath
 
 from OpenGL.GL import GL_RGB, GL_UNSIGNED_BYTE, glReadPixels
 from OpenGL.GLU import GLubyte
@@ -17,8 +18,6 @@ from OpenGL.GLUT import (
     glutAttachMenu,
     glutCreateMenu,
 )
-from os.path import abspath
-
 from PIL import Image
 
 from .basicgui import BasicGUI
@@ -134,7 +133,7 @@ class GUI(BasicGUI):
 
     def SaveScreenshot(self):
         """Save a screenshot of the map as wesen-<turn>.png"""
-        filename = "wesen-%08d.png" % self.world.turns
+        filename = f"wesen-{self.world.turns:08d}.png"
         try:
             self.takeScreenshot().save(filename)
         except Exception:
@@ -176,7 +175,7 @@ class GUI(BasicGUI):
         BasicGUI.RenderScene(self)
         if self.movieMode:
             try:
-                self.takeScreenshot().save("m%08d.png" % self.world.turns)
+                self.takeScreenshot().save(f"m{self.world.turns:08d}.png")
             except Exception:
                 print("wesen: movie frame failed, movie mode off:")
                 print(traceback.format_exc())
