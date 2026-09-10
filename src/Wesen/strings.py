@@ -30,6 +30,7 @@ STRING_CONFIGED = {
         "CHILD_MIN_ENERGY": "(a birth needs to leave the child at least this much, or it fails)\nchild_min_energy=",
         "ATTACK_DAMAGE": "(energy a victim loses, per energy of the attacker)\nattack_damage=",
         "ATTACK_COST": "(energy an attacker loses, per energy the victim had)\nattack_cost=",
+        "CPU_BUDGET": "(seconds of processor time one wesen may spend deciding what to do, before its turn is cut short; 0 switches it off)\ncpu_budget=",
         "SHARED_STATE": "(what a source may keep on its class: allow = anything, isolate = every wesen gets its own copy of it, strict = it must not change at all)\nshared_state=",
     },
     "GUI": {

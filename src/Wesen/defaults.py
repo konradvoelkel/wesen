@@ -39,6 +39,7 @@ CONFIG_OPTIONS = [
             ("attack_damage", float),
             ("attack_cost", float),
             ("shared_state", str),  # allow | isolate | strict
+            ("cpu_budget", float),  # seconds of thought per turn, 0 off
         ],
     ],
     [
@@ -122,6 +123,11 @@ CONFIG_DEFAULTS = {
         "attack_damage": 0.75,
         "attack_cost": 0.5,
         "shared_state": "isolate",
+        # seconds of processor time one wesen may spend deciding what
+        # to do, before its turn is cut short (see budget.py). Loose on
+        # purpose: the worst legitimate turn measured is about 0.05 s,
+        # so this breaks a hang without touching anybody's strategy
+        "cpu_budget": 0.5,
     },
     "climate": {
         "enable": True,

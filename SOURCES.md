@@ -311,6 +311,19 @@ lesson:
   against 500 without the gate — while the density rules alone decide how
   dense it ends up. A heavily grazed cell never reaches maturity, so
   grazing suppresses the spread of the pasture around it.
+* **Your code has a time limit of its own.** `time` budgets what a wesen
+  may *do* in a turn; `[wesen] cpu_budget` (0.5 s, 0 switches it off)
+  budgets how long its code may take to decide. Go over it and the turn
+  is cut short by a `RuleException` raised wherever you happened to be,
+  and counted like any other rule violation — the game plays on without
+  you that turn. It is loose on purpose: measured over 18 000 turns of
+  the full field, the median wesen thinks for 0.6 ms, the 99th
+  percentile is 7.6 ms and the slowest turn seen was 49 ms (Rincewind).
+  So it breaks a hang rather than shaving a strategy; a tournament may
+  set it tighter. Two consequences: catching the interrupt buys nothing
+  (the timer repeats until the turn really ends), and a game in which
+  the budget actually fires no longer replays exactly, because where
+  the cut falls depends on the machine. Unix only — see `budget.py`.
 * A source that raises an exception no longer ends the game: the turn is
   skipped and counted in `World.faults`, and each distinct error is
   printed once with its traceback. Rule violations are counted apart from
@@ -707,7 +720,7 @@ to be breeding when the game is stopped:
 | `mean` | the area under the energy curve divided by the length of the game: what the source held *on average*. This is what the ranking uses. |
 | `energy` | energy at the last turn — the old score. Printed as a second ranking whenever it disagrees with the first, since the disagreement is the interesting part. |
 | `alive` | share of the game the source had at least one wesen. |
-| `cpu` | share of the real time spent running source code. Nothing in the rules limits this — in-game `time` budgets what a wesen may *do*, not what its code may cost — so a source that thinks for a second a turn shows up here and nowhere else. It is usually the answer to why a game crawls. |
+| `cpu` | share of the real time spent running source code. In-game `time` budgets what a wesen may *do*, not what its code costs to work out; `[wesen] cpu_budget` caps the latter per turn (section 4), and this column is how you see who is spending it. It is usually the answer to why a game crawls. |
 
 `--seeds 1,2,3` plays each seed and averages, with a `wins` column, so
 one lucky game cannot decide a match. `--json FILE` writes it all out.

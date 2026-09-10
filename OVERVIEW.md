@@ -23,6 +23,7 @@ src/Wesen/
   loader.py              # CLI args, config file lookup, checks sources, starts Wesend
   sourceloader.py        # where a player's source is looked for and loaded
   tournament.py          # headless matches, scored over the whole game
+  budget.py              # processor-time limit on a source's turn
   configed.py            # INI config reader/editor (~/.wesen/conf by default)
   defaults.py            # CONFIG_OPTIONS / CONFIG_DEFAULTS (all tunables)
   strings.py             # help strings + VERSIONSTRING (still says 0.6.0-alpha)

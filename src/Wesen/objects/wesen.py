@@ -1,5 +1,6 @@
 """The class for all data and operations a single Wesen has"""
 
+from .. import budget
 from ..isolation import DEFAULT_MODE, prepare, readOnly, sealed
 from ..sourceloader import loadSource
 from .base import WorldObject, stochasticRound
@@ -488,4 +489,29 @@ class Wesen(WorldObject):
             self.time = min(
                 self.time + self.infoTime["init"], self.infoTime["max"]
             )
+            self.think()
+
+    def think(self):
+        """asks the source what to do, under a processor-time budget.
+
+        The budget is not one of the game's own resources - it is what
+        keeps one source from ending everybody's game with a loop that
+        never finishes (see budget.py). Running out of it comes back as
+        a rule violation, so a turn is lost and nothing else."""
+        seconds = self.infoObject.get("cpu_budget", 0)
+        if not budget.arm(seconds, RuleException, self.tooSlow(seconds)):
             self.wesenSource.main()
+            return
+        try:
+            self.wesenSource.main()
+        finally:
+            budget.disarm()
+
+    @staticmethod
+    def tooSlow(seconds):
+        return (
+            f"took more than [wesen] cpu_budget = {seconds} seconds of "
+            f"processor time to decide what to do, and was interrupted. "
+            f"The in-game 'time' budgets what a wesen may do in a turn, "
+            f"not what its code may cost to work out; both are limited."
+        )
