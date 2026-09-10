@@ -326,7 +326,10 @@ class WesenSource(DefaultWesenSource):
                 self.clock = heard
             self.count("heard")
         except Exception:  # noqa: BLE001
-            self.fault("Receive")
+            # a colleague's message must never cost us the turn: anyone
+            # in range can Broadcast anything, and a malformed one is
+            # noise, not an emergency
+            self.count("fault:Receive")
 
     def takeOrders(self, message):
         """birth papers: uid, calendar, district and the colony's map.
