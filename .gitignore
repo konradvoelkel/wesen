@@ -45,3 +45,6 @@ uv.lock
 
 #fuer mein PyCharm
 .idea/
+
+# throwaway development scripts, runs and logs
+local/
