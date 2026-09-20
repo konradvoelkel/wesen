@@ -98,7 +98,17 @@ class Wesend:
             self.main()
 
     def initGUI(self, extraArgs):
-        """handing over all control to the gui"""
+        """handing over all control to the gui
+
+        Everything that can keep a window from opening is turned into
+        one message that says what to install or which flag to use
+        instead: see gui/__init__.py for why the alternative is a
+        traceback out of PyOpenGL, or nothing at all. The loader has
+        usually asked already; this is the gate for everything that
+        did not come through it."""
+        from .gui import exitIfGuiUnavailable
+
+        exitIfGuiUnavailable()
         GUI = importlib.import_module(
             ".gui." + self.infoGui["source"], __package__
         ).GUI

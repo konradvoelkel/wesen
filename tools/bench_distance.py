@@ -35,6 +35,7 @@ This time consumption can be roughly explained:
   instead of comparing against 0
 """
 
+from pathlib import Path
 from timeit import repeat as timeit_repeat
 
 from numpy import abs as numpyabs
@@ -42,6 +43,11 @@ from numpy import array as numpyarray
 from numpy import inf as maxmetric
 from numpy.linalg import norm as numpylinalgnorm
 from numpy.random import randint
+
+# timeit runs each statement in a fresh namespace, so the setup has to
+# import this file back; the name it imports is this file's own, taken
+# from the file rather than written out, so that renaming it is free.
+SELF = Path(__file__).stem
 
 
 def explicit_abs_0(p, q, radius):
@@ -182,9 +188,9 @@ def test_times():
         "testing", repeat, "times", number, "calls of each implementation"
     )
     setup = (
-        "import testradius;"
-        + "values=testradius.some_values();"
-        + "values_nparray=testradius.some_values_nparray();"
+        f"import {SELF};"
+        + f"values={SELF}.some_values();"
+        + f"values_nparray={SELF}.some_values_nparray();"
     )
     executionStack = {}
     results = []
@@ -194,7 +200,7 @@ def test_times():
         executionStack[func.__name__] = "(*values_nparray)"
     # print("testing implementations:\n\t"+"\n\t".join(executionStack.keys()))
     for funcname, values in executionStack.items():
-        stmt = "testradius." + funcname + values
+        stmt = f"{SELF}." + funcname + values
         min_time = min(
             timeit_repeat(
                 stmt=stmt, setup=setup, number=number, repeat=repeat

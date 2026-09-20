@@ -12,17 +12,17 @@ In some tournaments, there is a penalty for computation cost."""
 
 import sys
 from cProfile import Profile
-
-# only in python3.3
 from pstats import Stats
 from time import perf_counter
+
+from Wesen.loader import Loader
 
 print("You can supply an alternative config file on the command-line")
 print("You should stop Wesen by Ctrl+C to finish profiling")
 
 sys.argv.append("--disablegui")
 pr = Profile(perf_counter)
-pr.run("Loader()")
+pr.runcall(Loader)
 pr.dump_stats("profile.stats")
 # you may explore profile.stats with the pstats browser.
 

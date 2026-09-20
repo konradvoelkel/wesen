@@ -60,6 +60,13 @@ def Loader(run_immediately=True):
         for section, sectionDict in parsedArgs._config.items():
             config[section].update(sectionDict)
     config["resume"] = parsedArgs.resume
+    if config["gui"]["enable"]:
+        # asked here, where nothing has been built yet, so that a
+        # machine that cannot show a window is told so at once instead
+        # of after a world, its sources and a page of their notes
+        from .gui import exitIfGuiUnavailable
+
+        exitIfGuiUnavailable()
     if len(extraArgs) > 0:
         print(
             "handing over the following command-line arguments to OpenGL: ",

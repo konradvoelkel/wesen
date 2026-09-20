@@ -56,12 +56,13 @@ and the _1_c_force variant arguably has clearest code,
 which makes it our choice.
 """
 
+from pathlib import Path
 from sys import argv
 from timeit import repeat as timeit_repeat
 
 from numpy.random import randint
 
-from src.Wesen.loader import Loader
+from Wesen.loader import Loader
 
 
 def getRangeIterator_3_c(objectIterator, position, radius, condition=None):
@@ -187,12 +188,17 @@ TEST_RADIUS = 40
 TEST_NUMBER = 300
 TEST_REPEAT = 40
 
+# timeit runs each statement in a fresh namespace, so the setup has to
+# import this file back; the name it imports is this file's own, taken
+# from the file rather than written out, so that renaming it is free.
+SELF = Path(__file__).stem
+
 SETUP = (
-    "import testrange;"
-    + "(worldobjects, worldlength) = testrange.initWorld();"
+    f"import {SELF};"
+    + f"(worldobjects, worldlength) = {SELF}.initWorld();"
     + "objects = worldobjects;"
-    + "position = testrange.some_position(worldlength);"
-    + "radius = testrange.TEST_RADIUS;"
+    + f"position = {SELF}.some_position(worldlength);"
+    + f"radius = {SELF}.TEST_RADIUS;"
     + "values = (objects, position, radius, condition);"
 )
 
@@ -251,7 +257,7 @@ def test_times_generic(setup):
     for func in TEST_THESE:
         executionStack[func.__name__] = "(*values)"
     for funcname, values in executionStack.items():
-        stmt = "list(testrange." + funcname + values + ")"
+        stmt = f"list({SELF}." + funcname + values + ")"
         min_time = min(
             timeit_repeat(
                 stmt=stmt, setup=setup, number=number, repeat=repeat

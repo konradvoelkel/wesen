@@ -1,9 +1,73 @@
-#! /usr/bin/python3
+#! /usr/bin/env python3
 
 """Copyright 2003-2013 by Konrad Voelkel and Reimer Backhaus.
 This program is distributed under the terms of the GNU General Public License.
 visit https://github.com/reims/wesen for versions > 2013
-or http://wesen.sourceforge.net for old versions of 2003,2004."""
+or http://wesen.sourceforge.net for old versions of 2003,2004.
 
-from src.Wesen.loader import Loader
-Loader()
+Run the game straight out of a clone: `./wesen`. It is the same
+program as the installed `wesen` command, and takes the same
+arguments; it only takes more care to be runnable before anything has
+been installed."""
+
+import os
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent
+
+INSTALL_HINT = """\
+wesen: the dependencies are not installed yet ({error}).
+
+Set the project up once, then run it:
+
+    uv venv && uv sync
+    uv run wesen
+
+After that `./wesen` works too. Without uv:
+
+    python3 -m venv .venv && .venv/bin/pip install -e .
+    .venv/bin/wesen
+
+The GUI additionally needs freeglut (`apt install freeglut3-dev`,
+`pacman -S freeglut`, `brew install freeglut`). To play without it:
+
+    uv run wesen --disablegui
+    uv run wesen-tournament --turns 2000 -s Dwarf,Rincewind\
+"""
+
+
+def _venvPython():
+    """The interpreter `uv venv` made, if it is there. This script's
+    shebang finds the system python, which is not where `uv sync` put
+    numpy and PyOpenGL, so running ./wesen in a fresh clone would fail
+    on the first import for no reason the reader can see."""
+    for candidate in (
+        ROOT / ".venv" / "bin" / "python",
+        ROOT / ".venv" / "Scripts" / "python.exe",
+    ):
+        if candidate.is_file():
+            return candidate
+    return None
+
+
+def main():
+    """hands over to the project's own interpreter if this is not
+    already it, then starts the game the same way the installed
+    console script does"""
+    venvPython = _venvPython()
+    if venvPython is not None and Path(sys.executable).resolve() != (
+        venvPython.resolve()
+    ):
+        os.execv(str(venvPython), [str(venvPython), __file__, *sys.argv[1:]])
+    sys.path.insert(0, str(ROOT / "src"))
+    try:
+        from Wesen.loader import Loader
+    except ImportError as error:
+        print(INSTALL_HINT.format(error=error), file=sys.stderr)
+        raise SystemExit(1) from None
+    Loader()
+
+
+if __name__ == "__main__":
+    main()

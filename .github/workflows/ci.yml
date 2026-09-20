@@ -5,7 +5,9 @@
 # `tests/game.py` plays a whole game of every shipped source and checks
 # that nobody broke a rule. Neither needs a display, so the GUI's
 # system dependency (freeglut) is not installed here; nothing under
-# test imports OpenGL.
+# test imports OpenGL. `tests/startup.py` is the exception that proves
+# it: it checks what a machine in exactly this state - no display, no
+# freeglut - is told when it asks for a window.
 name: CI
 
 on:
@@ -34,6 +36,13 @@ jobs:
 
       - name: Install the project
         run: uv sync --python ${{ matrix.python }}
+
+      # The same seed has to play the same game, and a game is played
+      # by numpy: a clone whose dependency versions were resolved
+      # freshly is a clone that can disagree with this one. The lock is
+      # committed, and this is what keeps it honest.
+      - name: Lockfile
+        run: uv lock --check
 
       - name: Lint
         run: uv run ruff check

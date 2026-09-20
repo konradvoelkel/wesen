@@ -147,9 +147,14 @@ class GUI(BasicGUI):
         BasicGUI.HandleMouse(self, button, state, x, y)
         if state == 1:
             # every click also refreshes screenshot.png (the one in the
-            # README); press "c" for a numbered shot that is kept
+            # README); press "c" for a numbered shot that is kept.
+            # The whole window, not the map: what the README is for is
+            # showing somebody who has not run the game what running it
+            # looks like, and three quarters of that is outside the map
+            # - the energy curves are the game's own account of who is
+            # winning, and the map alone is a field of green dots.
             try:
-                self.takeScreenshot().save("screenshot.png")
+                self.takeWindowShot().save("screenshot.png")
             except Exception:
                 print("wesen: could not save screenshot.png")
                 print(traceback.format_exc())
@@ -157,18 +162,23 @@ class GUI(BasicGUI):
     def takeScreenshot(self):
         """takes a screenshot of the map region"""
         width, height = self.windowSize
+        image = self.takeWindowShot()
+        # take only the Map part of the screenshot:
+        image = image.crop((0, 0, width // 2, height // 2))
+        # resize to a uniform format (important for movie mode):
+        image = image.resize((800, 800), Image.LANCZOS)
+        return image
+
+    def takeWindowShot(self):
+        """reads the whole window back out of OpenGL as an image"""
+        width, height = self.windowSize
         buffer = (GLubyte * (3 * width * height))(0)
         glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, buffer)
         image = Image.frombytes(
             mode="RGB", size=(width, height), data=buffer
         )
         # use image coordinates, not OpenGL coordinates:
-        image = image.transpose(Image.FLIP_TOP_BOTTOM)
-        # take only the Map part of the screenshot:
-        image = image.crop((0, 0, width // 2, height // 2))
-        # resize to a uniform format (important for movie mode):
-        image = image.resize((800, 800), Image.LANCZOS)
-        return image
+        return image.transpose(Image.FLIP_TOP_BOTTOM)
 
     def RenderScene(self):
         """draws the actual descriptor"""

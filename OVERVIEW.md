@@ -17,7 +17,7 @@ most energy wins.
 ## Layout
 
 ```
-wesen                    # launcher script (imports src.Wesen.loader)
+wesen                    # launcher script: runs the game from a clone
 pyproject.toml           # uv/setuptools, deps numpy, PyOpenGL, Pillow; script `wesen`
 src/Wesen/
   loader.py              # CLI args, config file lookup, checks sources, starts Wesend
@@ -26,7 +26,7 @@ src/Wesen/
   budget.py              # processor-time limit on a source's turn
   configed.py            # INI config reader/editor (~/.wesen/conf by default)
   defaults.py            # CONFIG_OPTIONS / CONFIG_DEFAULTS (all tunables)
-  strings.py             # help strings + VERSIONSTRING (still says 0.6.0-alpha)
+  strings.py             # help strings + VERSIONSTRING (read from the package metadata)
   wesend.py              # runs one game: builds World, optional GUI, headless loop
   world.py               # World: grid map, objects dict, per-turn loop, stats, persistence
   point.py               # torus helpers: getShortestTranslation, getDistInMaxMetric
@@ -37,10 +37,11 @@ src/Wesen/
   objects/food.py        # Food: Grow, Seed, merge food on same cell
   sources/<Name>/main.py # AIs, class must be called WesenSource
   gui/                   # freeglut/PyOpenGL GUI: map + energy graph + text stats
+                         #   __init__.py says why a window cannot open here
 tests/                   # unittest: rules, persistence, sources,
                          #   determinism (same seed, two interpreters),
                          #   game (a whole game of every shipped source)
-profile.py, testradius.py, testrange.py  # dev/benchmark scripts
+tools/                   # profile_wesen.py, bench_distance.py, bench_range.py
 data/                    # old changelog / release plan
 ```
 
@@ -74,7 +75,9 @@ Runs on the game's own defaults without a config file. The older
 `local/tournament.py` is what it grew out of and is superseded by it.
 
 `local/tournament.conf` is a copy of `~/.wesen/conf` (identical to
-`defaults.py`) and can be passed to `wesen -c local/tournament.conf`.
+`defaults.py`) and can be passed to `wesen -c local/tournament.conf`;
+without `-c` the same defaults are used, so it is a convenience, not a
+requirement.
 
 Source discovery (`sourceloader.py`, since 0.8): a source is looked for
 in `~/.wesen/sources`, then in the folders named by `[wesen] sourcepath`

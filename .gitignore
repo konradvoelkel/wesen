@@ -24,9 +24,11 @@ lib64
 # Profiling
 *.stats
 
-# Screenshots
+# Screenshots: movie frames, and the numbered shots the `c` key keeps.
+# screenshot.png is the one in the README and IS tracked - the GUI
+# refreshes it on every click, so it stays a picture of the real game.
 m*.png
-screenshot.png
+wesen-*.png
 
 #emacs backup
 *~
@@ -37,9 +39,6 @@ screenshot.png
 debug.out
 profile.stats_before
 
-# Pylance
-uv.lock
-
 #Mac
 .DS_Store
 
@@ -48,3 +47,7 @@ uv.lock
 
 # throwaway development scripts, runs and logs
 local/
+
+# uv.lock is deliberately NOT ignored. The same seed has to play the
+# same game, and a game is played by numpy; a clone that resolves its
+# own dependency versions is a clone that can disagree with this one.

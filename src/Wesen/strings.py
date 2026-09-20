@@ -4,7 +4,23 @@ from .defaults import DEFAULT_CONFIGFILE, DEFAULT_GAME_STATE_FILE
 
 # for I18N, insert here a stringtable-loader or replace this file.
 
-VERSIONSTRING = "wesen 0.6.0-alpha"
+
+def _version():
+    """The project's version, from the package metadata built out of
+    pyproject.toml, so that `wesen --version` and the window title
+    cannot drift away from it the way the literal here did: it still
+    said 0.6.0-alpha two releases on. The fallback is for a source
+    tree that was never installed, where there is no metadata to
+    read."""
+    from importlib.metadata import PackageNotFoundError, version
+
+    try:
+        return version("wesen")
+    except PackageNotFoundError:
+        return "from source"
+
+
+VERSIONSTRING = "wesen " + _version()
 URL = "https://github.com/reims/wesen"
 
 STRING_ERROR_NOTSAMEPATH = "There is a path problem. The program could not find the desired files."

@@ -7,14 +7,18 @@ you only need this file to write an AI ("source").
 
 ```sh
 uv sync                                   # once; needs freeglut3-dev for the GUI
-uv run wesen -c local/tournament.conf     # GUI (starts PAUSED: press space)
-uv run wesen -c local/tournament.conf --disablegui   # headless, Ctrl+C stops
+uv run wesen                              # GUI (starts PAUSED: press space)
+uv run wesen --disablegui                 # headless, Ctrl+C stops
 uv run wesen -s MyWesen,Dwarf -p ~/my-wesen              # sources of your own
 uv run wesen-tournament --turns 2000 --seeds 1,2,3 \
     --sources Vetinari,Dwarf,Nightwatch,Rincewind,GreatRabbit   # headless, scored
 uv run python -m unittest discover -s tests -t . -p '*.py'   # the whole suite
 uv run ruff check src/Wesen/sources/<Name>/ && uv run ruff format src/Wesen/sources/<Name>/
 ```
+
+Without a config file the game uses its own defaults and writes them to
+`~/.wesen/conf` on first run; `-c FILE` plays from a different one
+instead.
 
 GUI keys (press `?` or `h` in the window for this list; right-click also
 opens a menu):
@@ -308,10 +312,11 @@ lesson:
   `foodYield(o)`, `foodKills(o)`, `foodSustainable(o)`, `foodRipe(o)`,
   `foodWanted(o, hungry, starving)`, `plantEnergy()` - see
   `defaultwesensource.py`. Tune the numbers headless with
-  `uv run python local/food_tuning.py --sources A,B --food growrate=0.2`
-  (also `--climate`, `--biome`, `--wesen`, `--no-climate`,
-  `--variation 0.2`); its `rich/poor` column is the food energy per cell
-  on the best third of the ground against the worst third.
+  `wesen-tournament`, or with more knobs by the untracked
+  `local/food_tuning.py` described at the end of this file
+  (`--climate`, `--biome`, `--wesen`, `--no-climate`, `--variation
+  0.2`); its `rich/poor` column is the food energy per cell on the best
+  third of the ground against the worst third.
 * Food, **classic rule** (`rule = classic`): `Grow` adds
   `int(uniform(0,2)·growrate)` per turn (growrate 0.2 → normal food
   never grows); vomited food grows ~0.5/turn regardless of size, dies at
