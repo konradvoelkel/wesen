@@ -107,7 +107,15 @@ class ConfigEd:
                 for option in options:
                     key = option[0]
                     self.setDefInputStandard(section, key)
-            self.configParser.write(open(self.configfile, "w"))
+            # the folder is normally made by the loader, on the way to
+            # the sources folder next to it; anything else that writes
+            # a config first - a test, a tool, `-c` with a new path -
+            # must not depend on that
+            folder = os.path.dirname(self.configfile)
+            if folder:
+                os.makedirs(folder, exist_ok=True)
+            with open(self.configfile, "w") as f:
+                self.configParser.write(f)
             print(STRING_MESSAGE_WROTE % self.configfile)
         else:
             print(STRING_ERROR_NOTWROTE % self.configfile)

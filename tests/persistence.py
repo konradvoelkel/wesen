@@ -5,20 +5,29 @@ if __name__ == "__main__":
 
     sys.path.append("../src")
 
+import os
+import shutil
+import tempfile
 import unittest
 
 from Wesen.configed import ConfigEd
-from Wesen.defaults import DEFAULT_CONFIGFILE
 from Wesen.wesend import Wesend
 from Wesen.world import World
 
 
 class TestPersistence(unittest.TestCase):
     def setUp(self):
-        configEd = ConfigEd(DEFAULT_CONFIGFILE)
+        # a config file of its own, in a folder that does not exist
+        # yet: the test must not write into the player's ~/.wesen, and
+        # a fresh machine (CI) has no such folder to write into
+        self.folder = tempfile.mkdtemp()
+        configEd = ConfigEd(os.path.join(self.folder, "wesen", "conf"))
         config = configEd.getConfig()
         wesend = Wesend(config)
         self.world = wesend.world
+
+    def tearDown(self):
+        shutil.rmtree(self.folder)
 
     def test_consistency(self):
         """Basic consistency check.
