@@ -142,5 +142,6 @@ History
   * 2013 version 0.6 for Python 3
   * 2026 version 0.7 for Python >= 3.10
 
-Copyright 2003-2013 by Konrad Voelkel and Reimer Backhaus, distributed
-under the terms of the GNU General Public License.
+Copyright 2003-2013 by Konrad Voelkel and Reimer Backhaus. Free
+software under the GNU General Public License, version 3 or later:
+see [`LICENSE`](LICENSE).
