@@ -103,7 +103,7 @@ wesen are nearly immune.
 | Rincewind | state machine: search food, then circle around energy-weighted food midpoint eating the biggest food older than 100 | extinct by ~500 |
 | GreatRabbit | walks to nearest food, reproduces at 150 | extinct by ~500 |
 | Scanner | walks a raster, eats what it stands on, reproduces at 500 | not in default config |
-| DrunkenSailor | random walk | trivial |
+| DrunkenSailor | (2026-09-20 rewrite) Lévy flight: staggers to the nearest bite in view, lurches a Pareto-distributed length when nothing is worth a step, sings a shanty on a rich patch that colleagues in earshot lurch toward | solo 35k mean (was 60); full field 7th, dies ~turn 1500 |
 | SoberSailor | buggy (self.position used as attribute) | would crash |
 | WindlePoons | walks to (5,5) then eats around there | trivial |
 | Manual | interactive console AI for debugging | dev tool |
