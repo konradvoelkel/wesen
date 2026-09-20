@@ -102,7 +102,7 @@ wesen are nearly immune.
 | Nightwatch | eats lowest-energy food, hunts weaker enemies once rich, scans east | extinct by ~1000 |
 | Rincewind | state machine: search food, then circle around energy-weighted food midpoint eating the biggest food older than 100 | extinct by ~500 |
 | GreatRabbit | walks to nearest food, reproduces at 150 | extinct by ~500 |
-| Scanner | walks a raster, eats what it stands on, reproduces at 500 | not in default config |
+| Scanner | (2026-09-20 rewrite) a police scanner: reads the food cells out of every foreign `Broadcast` it overhears - the engine says who sent it, the protocol is guessed from the shape `(x, y, energy)` - walks to the best fresh tip, relays to colleagues, sweeps the raster only when the air is silent | solo 42k mean (was 61); full field 9th, dies ~turn 1500 |
 | DrunkenSailor | (2026-09-20 rewrite) Lévy flight: staggers to the nearest bite in view, lurches a Pareto-distributed length when nothing is worth a step, sings a shanty on a rich patch that colleagues in earshot lurch toward | solo 35k mean (was 60); full field 7th, dies ~turn 1500 |
 | SoberSailor | buggy (self.position used as attribute) | would crash |
 | WindlePoons | walks to (5,5) then eats around there | trivial |
