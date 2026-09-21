@@ -27,7 +27,7 @@ whole story. That is a real cost, and the reason the default is loose
 enough that nothing sane reaches it: it is here to break a hang, not to
 shave a strategy. A tournament that wants the tighter, fairer rule can
 set ``[wesen] cpu_budget`` to whatever it likes - the measured spread is
-in SOURCES.md - and accept that it is measuring speed as well as play.
+in GUIDE.md - and accept that it is measuring speed as well as play.
 
 Only where the platform has ``setitimer`` and only on the main thread,
 which is to say everywhere this game is actually played but not on

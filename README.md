@@ -92,9 +92,10 @@ sources next to it are worth reading: `GreatRabbit` is forty lines,
 `Dwarf` is a mining clan you can hold in your head, `Rincewind` runs a
 colony that gossips.
 
-**[`SOURCES.md`](SOURCES.md) is the guide** — the whole API, the rules
-that decide games, and what each existing source does. Read it before
-writing anything; the rules of the food economy are not guessable.
+**[`GUIDE.md`](GUIDE.md) is the guide** — the whole API, the rules
+that decide games, and how to measure a source. Read it before writing
+anything; the rules of the food economy are not guessable.
+[`SOURCES.md`](SOURCES.md) describes what each shipped source does.
 
 
 Develop

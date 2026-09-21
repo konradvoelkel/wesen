@@ -44,7 +44,7 @@ ignore = [
 
 [tool.ruff.format]
 # The formatter reaches into Python blocks inside Markdown, and the
-# skeletons in SOURCES.md are laid out to be read rather than to be
+# skeletons in GUIDE.md are laid out to be read rather than to be
 # run: one line per method, so the shape of a source fits on a screen.
 exclude = ["*.md"]
 

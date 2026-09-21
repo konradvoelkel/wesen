@@ -3,7 +3,7 @@
 Layout, history and results: how the pieces fit together and what
 happened when they were played against each other. Started 2026-09-07 as
 working notes and kept as the project's own record since 0.8. To *write*
-a source, read `SOURCES.md` instead of this file; `local/` holds
+a source, read `GUIDE.md` instead of this file; `local/` holds
 throwaway development scripts and is not tracked.
 
 ## What it is
@@ -70,7 +70,7 @@ uv run wesen-tournament --turns 3000 --seeds 1,2,3 --sources Vetinari,Dwarf,Nigh
 ```
 
 Ranks by the area under each source's energy curve rather than by its
-energy at the final turn; `SOURCES.md` section 8 explains the columns.
+energy at the final turn; `GUIDE.md` section 5 explains the columns.
 Runs on the game's own defaults without a config file. The older
 `local/tournament.py` is what it grew out of and is superseded by it.
 
@@ -90,27 +90,18 @@ by editing the installation.
 
 ## Game rules and the source API
 
-See `SOURCES.md` (compact, complete). Short version: gardening via
+See `GUIDE.md` (compact, complete). Short version, as it was then: gardening via
 `Vomit(1)` is the only sustainable income, time is the bottleneck, fat
 wesen are nearly immune.
 
 ## Existing sources (src/Wesen/sources)
 
-| source | behaviour | default tournament outcome (2000 turns, seed 1) |
-|---|---|---|
-| Dwarf | (2026-09-21 rewrite) a mining clan: the shaft is sunk on the richest ground the fertility oracle shows, the mine is six galleries worked one per shift on a talked clock so each rests five shifts, thieves on the own cell are killed cheaply, fat guards hunt within reach, the threatened run to a guard, and a crowded clan sends its fattest to sink a new shaft | beats LuTze/Vetinari 2/2 in duels; full field 4th-5th, alive 10/10 seeds |
-| Nightwatch | (2026-09-21 rewrite) the city and the beat: a square city of beats around the watch house, patrolled by staleness; `look()` as a cheap lantern counting food per beat; the hours called every eighth turn with beats, a relayed roll and whistles; a precinct is staffed when the roll matches the counted food, then the fattest opens one in an unwatched quarter; thieves arrested, sergeants hunt | beats LuTze/Weatherwax/Vetinari 2/2; full field 3rd, alive 10/10 seeds |
-| Rincewind | state machine: search food, then circle around energy-weighted food midpoint eating the biggest food older than 100 | extinct by ~500 |
-| GreatRabbit | walks to nearest food, reproduces at 150 | extinct by ~500 |
-| Scanner | (2026-09-20 rewrite) a police scanner: reads the food cells out of every foreign `Broadcast` it overhears - the engine says who sent it, the protocol is guessed from the shape `(x, y, energy)` - walks to the best fresh tip, relays to colleagues, sweeps the raster only when the air is silent | solo 42k mean (was 61); full field 9th, dies ~turn 1500 |
-| DrunkenSailor | (2026-09-20 rewrite) Lévy flight: staggers to the nearest bite in view, lurches a Pareto-distributed length when nothing is worth a step, sings a shanty on a rich patch that colleagues in earshot lurch toward | solo 35k mean (was 60); full field 7th, dies ~turn 1500 |
-| SoberSailor | (2026-09-21 rewrite) the chart and the log: the world cut into blocks three harbours wide, the most fertile sample of each block a port, all ports on one boustrophedon loop computed from the seed; sails port to port grazing under way, takes shore leave to the floor, logs every port and reads the log out on the quay; stops splitting once most recent landfalls were dry | beats LuTze/Vetinari 2/2; full field 5th-6th, alive 10/10 seeds |
-| WindlePoons | (2026-09-20 rewrite) the Fresh Start Club: roams and breeds in summer; when fat at the first lean turn it `Vomit`s all but a fighting body onto a fertile cell (food pays no upkeep; a blob bigger than maxamount lies there until eaten) and sits the winter on the grave, striking thieves; in spring the bank is withdrawn and split into a litter; at age 950 it splits to reset its age. Measured: the bank is a wash against never settling, see its docstring | solo 34k mean (was 61); full field 6th, survives 7/8 seeds |
-| Manual | interactive console AI for debugging | dev tool |
-| example.py | template | — |
-
-Default config sources (defaults.py): Rincewind,Nightwatch,Dwarf,GreatRabbit,Vetinari. Outcomes above are from the baseline without Vetinari.
-Simulation speed headless: ~40 turns/s at 500×500 with ~1000 objects.
+What each source does today is in `SOURCES.md`. Of the original 2003
+roster, Dwarf, Nightwatch, Rincewind, GreatRabbit, Scanner,
+DrunkenSailor, SoberSailor and WindlePoons keep their names; all but
+GreatRabbit have been rewritten from scratch under the life food rule.
+Vetinari, Weatherwax and LuTze were added in 2026 (below). `Manual` is
+an interactive console AI for debugging and `example.py` the template.
 
 ## Ideas noted in data/releaseplan.md
 
@@ -187,7 +178,7 @@ gardening but with 10-30× less energy.
 ## New source: Weatherwax (src/Wesen/sources/Weatherwax/main.py)
 
 Added 2026-09-07 to beat Vetinari and Dwarf by exploiting their code
-(see the module docstring and SOURCES.md 5b). Also added to the default
+(see the module docstring). Also added to the default
 source list in `defaults.py` and to `local/tournament.conf`.
 
 Roles per wesen: gardener (rolling patch cycle, harvest before age 44),
@@ -224,7 +215,7 @@ simulation at 6-10 turns/s in the second half of a game.
 ## New source: LuTze (src/Wesen/sources/LuTze/main.py)
 
 Added 2026-09-08 to beat every other source in the same game, including
-Weatherwax (see the module docstring and SOURCES.md 6b/7b). Also added
+Weatherwax (see the module docstring). Also added
 to the default source list in `defaults.py` and to `local/tournament.conf`.
 
 Roles per wesen: gardener (bootstrap: founders split into 8 gardeners of
