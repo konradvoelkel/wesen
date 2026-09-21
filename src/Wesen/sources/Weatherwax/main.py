@@ -72,8 +72,10 @@ from ...point import getShortestTranslation
 STRICT = bool(os.environ.get("WESEN_STRICT"))
 
 # sources that hunt wesen once they hold the first energy, attacking any
-# wesen up to their own energy plus the second (see their helper.py)
-CHASERS = {"Dwarf": (301, 300), "Nightwatch": (375, 375)}
+# wesen up to their own energy plus the second. The old Dwarf and
+# Nightwatch did (their helper.py); since their 2026-09-21 rewrite both
+# strike only what they can kill outright, like everybody else
+CHASERS = {}
 # sources that never attack anybody
 HARMLESS = {"GreatRabbit", "Rincewind"}
 # sources that strike only on their own cell, and only when it kills

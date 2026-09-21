@@ -59,8 +59,10 @@ STRICT = bool(os.environ.get("WESEN_STRICT"))
 # sources with a flight reflex: they flee 3 cells from killers this close
 FLEE_RADIUS = {"Vetinari": 6, "Weatherwax": 5}
 # sources that hunt wesen once they have the first energy, attacking any
-# wesen up to their own energy + the second (they strike on arrival)
-CHASERS = {"Dwarf": (301, 300), "Nightwatch": (375, 375)}
+# wesen up to their own energy + the second (they strike on arrival).
+# The old Dwarf and Nightwatch did; since their 2026-09-21 rewrite both
+# strike only what they can kill outright, like everybody else
+CHASERS = {}
 # energy per turn an untouched resident of a garden source gains
 GROWTH = {"Vetinari": 25, "Weatherwax": 8}
 

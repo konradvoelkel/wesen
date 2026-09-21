@@ -68,14 +68,14 @@ class WesenSource(DefaultWesenSource):
     FORAGE_ENERGY_PER_CELL = 25  # ... if it yields at least this per cell
     MAX_FORAGE_DISTANCE = 12
 
-    # Dwarf and Nightwatch strike anything up to their own energy plus a
-    # fixed margin (see their helper.py: acceptableEnemy /
-    # minimumEnergyToFight) regardless of how small that margin is
-    # relative to their size, so a fattened Dwarf/Nightwatch can one-shot
-    # almost anyone. Known by name here so bulkTarget() can demand exactly
-    # the margin that matters, instead of an arbitrary multiple, when
-    # deciding whether outgrowing a threat in place is even reachable.
-    CHASER_MARGIN = {"Dwarf": 300, "Nightwatch": 375}
+    # Sources that strike anything up to their own energy plus a fixed
+    # margin, known by name so bulkTarget() can demand exactly the margin
+    # that matters instead of an arbitrary multiple. The old Dwarf and
+    # Nightwatch were such (their helper.py: acceptableEnemy /
+    # minimumEnergyToFight); since the 2026-09-21 rewrite both strike
+    # only what they can kill outright, which is what everybody not
+    # named here is assumed to do, so the table is empty.
+    CHASER_MARGIN = {}
     DANGER_GRID = 8  # cell size of the danger-memory grid
     DANGER_DECAY_TURNS = 200  # forget a danger sighting after this long
     HOME_DANGER_LIMIT = 2  # relocate after this many scares at home

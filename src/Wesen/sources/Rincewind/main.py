@@ -110,13 +110,13 @@ from .plan import (
     stepVector,
 )
 
-# Who attacks whom. These two numbers are the *other sources'* own
-# hardcoded thresholds (see Dwarf/helper.py and Nightwatch/helper.py):
-# they hunt anything up to their own energy plus a fixed margin, once
-# they hold the first amount. They are not rules of the game and are
-# not read from the config, and any source not named here is judged by
-# what its attack would do, which is (see `wouldAttack`).
-CHASERS = {"Dwarf": (301, 300), "Nightwatch": (375, 375)}
+# Who attacks whom. A source named here hunts anything up to its own
+# energy plus a fixed margin once it holds the first amount - a claim
+# about *its* code, not a rule of the game. The old Dwarf and Nightwatch
+# were such (their helper.py); since their 2026-09-21 rewrite both
+# strike only what they can kill outright, so nobody is named here and
+# every source is judged by what its attack would do (see `wouldAttack`).
+CHASERS = {}
 # sources that never attack anybody at all
 HARMLESS = {
     "GreatRabbit",
