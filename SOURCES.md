@@ -74,7 +74,7 @@ from Wesen.point import getDistInMaxMetric, getShortestTranslation  # optional
 ```
 
 A source package may import its own modules the ordinary way
-(`from . import helper`), as `Dwarf`, `Nightwatch` and `Rincewind` do.
+(`from . import ledger`), as `Rincewind` does.
 The sources in `src/Wesen/sources/` are *inside* the game's package and
 so use relative imports (`from ...defaultwesensource import ...`); that
 form only works in there, and is the one thing to change when you copy
@@ -354,11 +354,13 @@ lesson:
 * Fights: attacker with A hitting V: V loses 0.75A, A loses 0.5V. Kill
   condition 0.75A ≥ V; attacking someone with V > 2A kills the attacker.
   Being fat is the best defence; first strike wins even fights.
-* Existing sources attack you when your energy ≤ theirs + 300..375
-  (Dwarf, Nightwatch) and eat any food they see (all of them).
-  Rincewind kills a cheap thief standing on its own cell since its
-  2026-09-09 rewrite (section 6c), so the "harmless" table in
-  Weatherwax is out of date about it.
+* Existing sources eat any food they see (all of them). Rincewind,
+  Dwarf and Nightwatch kill a cheap thief standing on their own cell
+  (a kill for a small share of their body); the fat Dwarfs and
+  Nightwatches also go for a stranger within a turn's walk that they
+  can kill that cheaply. Until 2026-09-21 Dwarf and Nightwatch struck
+  anything up to their own energy plus 300/375, and the four colonies
+  still carry (now empty) tables for that rule, `CHASERS`.
 * `Talk` and `Broadcast` cost 1 time each, the same as a seventh of a
   step, and the message is any Python object: the channel is by far the
   cheapest thing in the game and, until Rincewind, nothing used it.
@@ -388,8 +390,10 @@ method for a working pattern: per-turn `closerLook`, threat handling,
 garden cell, reproduction under a population cap, persistence, class-level
 shared state (world-turn estimate, alive registry, claimed targets).
 
-`src/Wesen/sources/example.py` is the minimal template; `Dwarf` is the
-best of the older sources; `Manual` is an interactive console AI.
+`src/Wesen/sources/example.py` is the minimal template; `Manual` is an
+interactive console AI. The three small colonies of section 6d
+(SoberSailor, Dwarf, Nightwatch, 400-700 lines each) are the shortest
+sources that hold their own against the big ones.
 
 ## 6. Weatherwax (2026-09 rewrite): a herding colony on a shared map
 
@@ -447,10 +451,11 @@ war machinery needed a colony of 16 that never came.
   spreads instead of trampling one cluster. Old age is cured by
   reproducing.
 * **Who attacks whom** is read from the opponents' code: Nightwatch and
-  Dwarf strike up to their own energy plus 375/300 once above 375/301,
-  Vetinari only on its own cell when it kills, GreatRabbit and Rincewind
-  never, everything else (LuTze, future sources) whatever it can kill
-  within a few cells. The wesen first eats itself out of reach if the
+  Dwarf struck up to their own energy plus 375/300 once above 375/301
+  (until their 2026-09-21 rewrite; the table is empty now and they are
+  judged like everybody else), Vetinari only on its own cell when it
+  kills, GreatRabbit and Rincewind never, everything else (LuTze, future
+  sources) whatever it can kill within a few cells. The wesen first eats itself out of reach if the
   cell allows it, else flees with its whole time budget along the line
   ending farthest from all threats (so a pursuer cannot time a fixed
   3-cell hop). Thieves on the own cell are killed when the kill costs at
@@ -599,6 +604,107 @@ filter closed over the loop variables of the loop it was filtering, so
 it raised `NameError` as soon as anything at all was within 24 cells -
 which is why no source had ever sent a message. One line in
 `objects/wesen.py`, plus three tests in `tests/rules.py`.
+
+## 6d. Three small colonies (2026-09-21): SoberSailor, Dwarf, Nightwatch
+
+Three of the old sources were rewritten from scratch on the same day,
+each around one idea that fits its name, and each without any class
+state: what a wesen knows it saw or was told. All three share one
+grazing policy, worked out from the rules in `readRules()`: a cell is
+bitten while it keeps 30 % of its capacity (the logistic growth peak is
+broad, so it regrows nearly as fast there as at half); below a birth and
+a reserve of 60 turns' upkeep the wesen is hungry and goes to 25 %;
+only with upkeep for fewer than 15 turns left does it eat a cell whole.
+A birth costs 20 time and needs three cells above the floor in view;
+old age is cured by splitting (`Reproduce` resets the age). Anything
+that could kill the wesen and reach it in a turn makes it run with the
+whole time budget. The three differ in *where* they graze:
+
+* **SoberSailor - the chart and the log.** The ground is knowable
+  before the first turn: `fertility()` is free and built from the
+  seed. Every sailor cuts the world into blocks three harbours wide,
+  takes the most fertile sample of each block as its *port*, and runs
+  the blocks boustrophedon into one loop - a route with every leg one
+  block long, the same for the whole fleet without a word said (a
+  nearest-neighbour tour with 2-opt cost a quarter of a second per
+  birth and was dropped). A sailor sails port to port, puts in for a
+  bite within five cells of its course, takes shore leave in harbour
+  until nothing is left above the floor, logs the port and reads the
+  log out on the quay so colleagues sail past a port grazed dry.
+  Rotational grazing at the scale of the world. Its population
+  governor is the log of *landfalls*: once most of the last eight
+  harbours it made were already dry, the fleet is as big as the coast
+  keeps, and it stops splitting.
+* **Dwarf - the mine, the shift and the axe.** A founder samples the
+  rock around it and sinks a shaft on the richest ground; the mine is
+  a disc of 2.5 sights around it, cut into six galleries like a pie,
+  and the clan works one gallery per *shift* on a clock kept in step by
+  talking, so each gallery rests five shifts and the crew stays
+  together. A cheap thief on the own cell is killed; a dwarf holding
+  two breeding bodies is a *guard* and goes for prey within reach; a
+  threatened dwarf runs to the nearest guard that could take the
+  bully. When more of the clan than the gallery feeds are in view for
+  a while, the fattest reads the rock two mine-widths out and sinks a
+  new shaft. It is the most restrained of the three (180 wesen alone
+  at turn 2000 with the pasture intact) and still beats LuTze.
+* **Nightwatch - the beat, the lantern and the hours.** The watch
+  house stands where the founder stood; the city is the square four
+  sights to a side around it, cut into beats one sight square. With
+  nothing in view worth a bite a watchman walks to the beat longest
+  unpatrolled by anybody's account, so grazing goes round the city by
+  staleness. `look()` costs half of `closerLook()` and sees twice as
+  far: the lantern is raised every third turn to count the food per
+  beat. Every eighth turn the hours are called: last patrol and food
+  per beat, the *roll* of everyone seen or heard (relayed, so it
+  reaches beyond earshot), and a whistle for the beat a bully stands
+  on, which the patrol keeps off for a while. The precinct is staffed
+  when the roll holds as many as the counted food keeps (a cell pays a
+  bite per regrowth cycle; 1.5x slack), and then the fattest of a crowd
+  walks out to open a precinct in an unwatched quarter. Thieves are
+  arrested and sergeants hunt as the Dwarf's guards do.
+
+Measured 2026-09-21 (1500-turn duels, seeds 1-2; full field of 11
+sources, 1000 turns, seeds 1-10): SoberSailor beats LuTze and Vetinari
+2/2 and loses to Weatherwax; Dwarf beats LuTze and Vetinari 2/2 and
+splits with Weatherwax; Nightwatch beats all three 2/2. All three are
+alive at turn 1000 in every field seed; Nightwatch is 3rd behind
+Rincewind and Weatherwax in 9 seeds of 10, Dwarf and SoberSailor 4th-6th.
+
+What the tuning taught (all measured, do not repeat):
+
+* **Planting is dead, measured.** Three cells of 50 laid in an empty
+  window grow their neighbourhood by 50 net over the first 100 turns,
+  and nature fills the same window by itself in 300: a return under
+  the 0.5 %/turn that carrying the energy costs. `Vomit` is not an
+  investment under the life rule.
+* **Restraint loses a shared pasture.** With the floor at 60 % of
+  capacity (the share from which a cell seeds) or births gated on
+  surplus per head, all three lost every duel by 5-10x: a mature
+  pasture is density-limited, its cells sit near 50 and never reach a
+  60 % floor, and whatever one side leaves the other eats. The floor
+  that wins is 25-30 %, and the population that wins is the one the
+  pasture can just feed. A per-wesen switch to restraint when no
+  stranger has been seen lately does not help either - most of a
+  colony never sees one, and the race for the empty world is lost
+  while it waits.
+* **A child born below the reserve kills cells.** With births at
+  2x reserve + cost the children start at the reserve, and with "eat
+  anything" gated on the reserve rather than a few turns of upkeep
+  every birth made two cell-killers; the field's pasture fell from
+  4000 to 500 cells by turn 1500. Hence the separate `desperate` line.
+* **A census by earshot undercounts by half.** The Watch's roll from
+  calls alone knew 4-11 of a precinct of 20; relaying the roll in every
+  call and keeping names for eight calls fixed the count. Precincts
+  still run above their staffing because a founder settles where it
+  sees nobody within one sight, and cities are eight sights wide.
+* **Hungry wesen drift off the city.** Letting a hungry watchman take
+  any bite in view walked precincts apart until most members stood 40-
+  80 cells from their house; a bite is now allowed at most one sight
+  beyond the wall.
+* **Do the arithmetic of a birth once.** A 196-port tour with 2-opt
+  took 0.24 s per wesen and, called from `reserve()` on every food in
+  view, blew the `cpu_budget` 758 times in one field game and used 86 %
+  of the machine.
 
 ## 7. Lessons from writing the first Weatherwax (engine facts and pitfalls)
 

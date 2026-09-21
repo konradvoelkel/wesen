@@ -98,13 +98,13 @@ wesen are nearly immune.
 
 | source | behaviour | default tournament outcome (2000 turns, seed 1) |
 |---|---|---|
-| Dwarf | targets food (age ≥ 50)/enemies, "seedOut" vomits 1 energy 3× while random walking, scan moves along a shared random vector | wins: 153 wesen / 153k energy |
-| Nightwatch | eats lowest-energy food, hunts weaker enemies once rich, scans east | extinct by ~1000 |
+| Dwarf | (2026-09-21 rewrite) a mining clan: the shaft is sunk on the richest ground the fertility oracle shows, the mine is six galleries worked one per shift on a talked clock so each rests five shifts, thieves on the own cell are killed cheaply, fat guards hunt within reach, the threatened run to a guard, and a crowded clan sends its fattest to sink a new shaft | beats LuTze/Vetinari 2/2 in duels; full field 4th-5th, alive 10/10 seeds |
+| Nightwatch | (2026-09-21 rewrite) the city and the beat: a square city of beats around the watch house, patrolled by staleness; `look()` as a cheap lantern counting food per beat; the hours called every eighth turn with beats, a relayed roll and whistles; a precinct is staffed when the roll matches the counted food, then the fattest opens one in an unwatched quarter; thieves arrested, sergeants hunt | beats LuTze/Weatherwax/Vetinari 2/2; full field 3rd, alive 10/10 seeds |
 | Rincewind | state machine: search food, then circle around energy-weighted food midpoint eating the biggest food older than 100 | extinct by ~500 |
 | GreatRabbit | walks to nearest food, reproduces at 150 | extinct by ~500 |
 | Scanner | (2026-09-20 rewrite) a police scanner: reads the food cells out of every foreign `Broadcast` it overhears - the engine says who sent it, the protocol is guessed from the shape `(x, y, energy)` - walks to the best fresh tip, relays to colleagues, sweeps the raster only when the air is silent | solo 42k mean (was 61); full field 9th, dies ~turn 1500 |
 | DrunkenSailor | (2026-09-20 rewrite) Lévy flight: staggers to the nearest bite in view, lurches a Pareto-distributed length when nothing is worth a step, sings a shanty on a rich patch that colleagues in earshot lurch toward | solo 35k mean (was 60); full field 7th, dies ~turn 1500 |
-| SoberSailor | buggy (self.position used as attribute) | would crash |
+| SoberSailor | (2026-09-21 rewrite) the chart and the log: the world cut into blocks three harbours wide, the most fertile sample of each block a port, all ports on one boustrophedon loop computed from the seed; sails port to port grazing under way, takes shore leave to the floor, logs every port and reads the log out on the quay; stops splitting once most recent landfalls were dry | beats LuTze/Vetinari 2/2; full field 5th-6th, alive 10/10 seeds |
 | WindlePoons | (2026-09-20 rewrite) the Fresh Start Club: roams and breeds in summer; when fat at the first lean turn it `Vomit`s all but a fighting body onto a fertile cell (food pays no upkeep; a blob bigger than maxamount lies there until eaten) and sits the winter on the grave, striking thieves; in spring the bank is withdrawn and split into a litter; at age 950 it splits to reset its age. Measured: the bank is a wash against never settling, see its docstring | solo 34k mean (was 61); full field 6th, survives 7/8 seeds |
 | Manual | interactive console AI for debugging | dev tool |
 | example.py | template | — |

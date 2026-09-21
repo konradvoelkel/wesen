@@ -88,8 +88,9 @@ uv run wesen-tournament --turns 2000 --seeds 1,2,3 -s MyWesen,Dwarf,Rincewind
 
 `-p DIR` adds another folder to look in.
 `src/Wesen/sources/example.py` is the empty template to copy, and the
-sources next to it are worth reading: `Dwarf` is small enough to hold
-in your head, `Rincewind` runs a colony that gossips.
+sources next to it are worth reading: `GreatRabbit` is forty lines,
+`Dwarf` is a mining clan you can hold in your head, `Rincewind` runs a
+colony that gossips.
 
 **[`SOURCES.md`](SOURCES.md) is the guide** — the whole API, the rules
 that decide games, and what each existing source does. Read it before
