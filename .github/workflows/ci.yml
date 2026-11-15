@@ -51,8 +51,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # the oldest Python the project claims to support, and the newest
-        python: ["3.10", "3.13"]
+        # the oldest Python the project claims to support, and the
+        # newest it is tested against (3.14 and 3.15 have shipped)
+        python: ["3.12", "3.13"]
     steps:
       # Pinned by commit SHA rather than by major tag: a tag lets an
       # action change under a workflow that nobody touched. Resolved
@@ -95,13 +96,14 @@ jobs:
       - name: Install the project
         run: uv sync --locked --python ${{ matrix.python }}
 
-      # What actually played, written down. The lock holds a different
-      # numpy for each Python (2.2.6 on 3.10, 2.4.6 on 3.11, 2.5.3 from
-      # 3.12 on), and glibc is pinned by nothing here except the runner
-      # label above. Measured 2026-11-15: all four of those Pythons
-      # play byte-identical games, and `tests/digests.json` records the
-      # digests that say so. On the day one of them stops agreeing,
-      # this is the line that says what moved.
+      # What actually played, written down. Since the floor rose to
+      # 3.12 the lock holds one numpy for every supported Python
+      # instead of three, and glibc is pinned by nothing here except
+      # the runner label above. Measured 2026-11-15, while 3.10 and
+      # 3.11 were still in: all four played byte-identical games, and
+      # `tests/digests.json` records the two that are still supported.
+      # On the day one of them stops agreeing, this is the line that
+      # says what moved.
       - name: Provenance
         run: |
           uv --version
@@ -130,16 +132,11 @@ jobs:
       # real test failure. It is still a gate and not a report:
       # `uv audit` exits 1 when it finds something.
       #
-      # AS OF 2026-11-15 THIS STEP FAILS, on both legs:
-      #   "62 vulnerabilities found", every one against pillow 12.3.0,
-      #   every one "Fixed in: 13.0.0".
-      # Pillow 13.0.0 requires Python >= 3.11 and this project's floor
-      # is 3.10, so the fix cannot be taken on every leg of this
-      # matrix. Land this file together with that decision - raise the
-      # floor to 3.11, or accept the 3.10 leg knowingly - and not
-      # before. See the dependency review of 2026-11-15: the game
-      # never opens an image it did not render itself, so none of the
-      # 62 is reachable here; that is a reason to be unhurried, not a
-      # reason to stop counting.
+      # Clean on both legs as of 2026-11-15. Those 62 are the reason
+      # this project's Python floor is 3.12: every one of them is
+      # fixed in pillow 13.0.0, which does not support 3.10. None of
+      # them was reachable here - the game never opens an image it did
+      # not render itself - which was a reason to be unhurried about
+      # it, not a reason to stop counting.
       - name: Audit
         run: uv audit --locked --python-version ${{ matrix.python }}

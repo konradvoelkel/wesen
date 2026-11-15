@@ -151,7 +151,7 @@ History
 
   * 2003 version 0.1 for Python 2
   * 2013 version 0.6 for Python 3
-  * 2026 version 0.7 for Python >= 3.10
+  * 2026 version 0.7 for Python >= 3.12
 
 Copyright 2003-2013 by Konrad Voelkel and Reimer Backhaus. Free
 software under the GNU General Public License, version 3 or later:

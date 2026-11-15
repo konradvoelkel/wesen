@@ -5,7 +5,7 @@ description = "game where players program the behavior of their Wesens to defeat
 readme = "README.md"
 license = "GPL-3.0-or-later"
 license-files = ["LICENSE"]
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 dependencies = [
     "numpy",
     "PyOpenGL>=3.1.0",
@@ -30,7 +30,10 @@ homebrew = ["freeglut"]
 
 [tool.ruff]
 line-length = 75
-target-version = "py312"
+# target-version is deliberately absent: ruff reads it from
+# `requires-python` above, so the floor is stated once. It used to say
+# py312 while the project claimed >=3.10, which is how a `UP` autofix
+# gets offered in syntax the oldest supported Python cannot parse.
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "Q", "I", "UP"]
