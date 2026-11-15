@@ -113,6 +113,15 @@ plays one seed in two fresh interpreters and compares, and
 `tests/game.py` plays every shipped source through a whole game and
 checks that nobody broke a rule. Neither needs a display.
 
+`tests/digests.py` is the other side of determinism. The test above can
+only compare two runs on the machine it is running on, so a numpy bump
+or a new libm underneath it changes both halves of the comparison at
+once and stays green; this one holds the digest of a game played once
+and written down in `tests/digests.json`, and so turns that into a
+failed test rather than a quietly different game. When something does
+move on purpose, `uv run python tests/digests.py --record` writes the
+new reference down - in a commit of its own, saying what moved.
+
 [`OVERVIEW.md`](OVERVIEW.md) maps the codebase and records what
 happened when the sources were played against each other. `tools/` has
 the profiler and the micro-benchmarks; `local/` is for throwaway
