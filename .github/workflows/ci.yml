@@ -8,6 +8,16 @@
 # test imports OpenGL. `tests/startup.py` is the exception that proves
 # it: it checks what a machine in exactly this state - no display, no
 # freeglut - is told when it asks for a window.
+#
+# Everything this job stands on that is not in the repo is pinned: the
+# runner image, both actions (by commit SHA), uv (by version and
+# checksum) and the Python packages (by `uv.lock`). The reason is not
+# hygiene for its own sake. A game is float arithmetic over a seeded
+# RNG, and `tests/determinism.py` compares two runs *inside one
+# environment* - so anything that changes the game from outside this
+# repo leaves CI green and says nothing at all. Here an unpinned
+# dependency is not a risk of breakage, it is a risk of silence.
+
 name: CI
 
 on:
@@ -15,43 +25,121 @@ on:
     branches: ["master", "main"]
   pull_request:
 
+# Nothing in this job writes to the repository.
+permissions:
+  contents: read
+
 jobs:
   check:
-    runs-on: ubuntu-latest
+    # Not `ubuntu-latest`. Between a green run on 2026-11-09 and one on
+    # 2026-11-15 that label moved from 24.04 to 26.04 - glibc 2.39 ->
+    # 2.43 - and 2.43 ships a new correctly-rounded `asinh` (CORE-MATH).
+    # A sibling project watched a bit-exact test fall from 9998/9998 to
+    # 9061/9998 over it, worst deviation one ULP, on a commit that
+    # touched nothing but `.gitignore`.
+    #
+    # This engine is less exposed than that: on the path a game takes
+    # there are no libm calls at all - the draws come from numpy's
+    # Mersenne Twister, and the arithmetic is comparisons, multiply-add
+    # and `**2`, all of which IEEE rounds exactly. So this pin is
+    # insurance rather than a cure for a known illness. It is worth the
+    # line anyway, because the illness would be symptomless: a changed
+    # libm turns nothing red here, it just plays a different game.
+    # `tests/digests.py` is what would notice. Changing this number is
+    # a commit of its own, with that test re-recorded.
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
         # the oldest Python the project claims to support, and the newest
         python: ["3.10", "3.13"]
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v5
+      # Pinned by commit SHA rather than by major tag: a tag lets an
+      # action change under a workflow that nobody touched. Resolved
+      # 2026-11-15; both MIT at these commits; both declare
+      # `using: node20`. The node24 runtime arrives only with
+      # checkout v7 and setup-uv v10, which is a decision of its own.
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
+          # the job never pushes, and a token left behind in
+          # .git/config is one that a later step - or something a
+          # later step installs - can pick up
+          persist-credentials: false
+
+      # uv resolves and installs everything else, so leaving its own
+      # version at "whatever shipped this morning" would undo the lock
+      # from above: a different uv can resolve a different tree. 0.12.0
+      # is what the maintainer runs at the desk, which is the whole
+      # point - CI and the desk agree about what a game is. The
+      # checksum is the x86_64 Linux archive's, so it is tied to the
+      # runner pinned above.
+      - name: Install uv
+        uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5.4.2
+        with:
+          version: "0.12.0"
+          checksum: "eaf842262aa1c418d8ecc5605f02ee1ebfd369124fa48548e85f9481a47831a9"
           enable-cache: true
 
       - name: Set up Python ${{ matrix.python }}
         run: uv python install ${{ matrix.python }}
 
-      - name: Install the project
-        run: uv sync --python ${{ matrix.python }}
-
       # The same seed has to play the same game, and a game is played
       # by numpy: a clone whose dependency versions were resolved
       # freshly is a clone that can disagree with this one. The lock is
-      # committed, and this is what keeps it honest.
+      # committed, and this is what keeps it honest. It runs ahead of
+      # the install so that drift fails here, saying "lock", instead of
+      # three steps later saying something else.
       - name: Lockfile
         run: uv lock --check
 
+      - name: Install the project
+        run: uv sync --locked --python ${{ matrix.python }}
+
+      # What actually played, written down. The lock holds a different
+      # numpy for each Python (2.2.6 on 3.10, 2.4.6 on 3.11, 2.5.3 from
+      # 3.12 on), and glibc is pinned by nothing here except the runner
+      # label above. Measured 2026-11-15: all four of those Pythons
+      # play byte-identical games, and `tests/digests.json` records the
+      # digests that say so. On the day one of them stops agreeing,
+      # this is the line that says what moved.
+      - name: Provenance
+        run: |
+          uv --version
+          uv run --frozen python -c 'import sys, numpy; print("python", sys.version); print("numpy", numpy.__version__)'
+          ldd --version | head -1
+          echo "runner image: $ImageOS $ImageVersion"
+
+      # `--frozen` on each of these: a check step has no business
+      # re-resolving the lock it is meant to be checking against.
       - name: Lint
-        run: uv run ruff check
+        run: uv run --frozen ruff check
 
       - name: Formatting
-        run: uv run ruff format --check
+        run: uv run --frozen ruff format --check
 
       - name: Types
-        run: uv run mypy src
+        run: uv run --frozen mypy src
 
       - name: Tests
-        run: uv run python -m unittest discover -s tests -t . -p '*.py' --verbose
+        run: uv run --frozen python -m unittest discover -s tests -t . -p '*.py' --verbose
+
+      # Last on purpose. Advisories appear without anyone touching the
+      # repo - 62 against pillow 12.3.0 were published between
+      # 2026-10-19 and 2026-11-12 - so a red audit is usually not about
+      # the commit under test, and it should not stand in front of a
+      # real test failure. It is still a gate and not a report:
+      # `uv audit` exits 1 when it finds something.
+      #
+      # AS OF 2026-11-15 THIS STEP FAILS, on both legs:
+      #   "62 vulnerabilities found", every one against pillow 12.3.0,
+      #   every one "Fixed in: 13.0.0".
+      # Pillow 13.0.0 requires Python >= 3.11 and this project's floor
+      # is 3.10, so the fix cannot be taken on every leg of this
+      # matrix. Land this file together with that decision - raise the
+      # floor to 3.11, or accept the 3.10 leg knowingly - and not
+      # before. See the dependency review of 2026-11-15: the game
+      # never opens an image it did not render itself, so none of the
+      # 62 is reachable here; that is a reason to be unhurried, not a
+      # reason to stop counting.
+      - name: Audit
+        run: uv audit --locked --python-version ${{ matrix.python }}
