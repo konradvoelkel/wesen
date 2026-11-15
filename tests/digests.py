@@ -19,11 +19,13 @@ game quietly invalidates every ranking in `SOURCES.md` and every
 measurement in the docs.
 
 The key records what the arithmetic depends on. Python's minor version
-and numpy's version, because the lock deliberately holds a different
-numpy for each Python (2.2.6 below 3.11, 2.4.6 on 3.11, 2.5.3 from 3.12
-on), so no single digest can speak for the whole CI matrix. The platform
-and the machine, because a reference recorded on linux-x86_64 has
-nothing to say about what Apple's libm will do. What is deliberately
+and numpy's version, because those two are the arithmetic the engine
+runs on and a bump in either is exactly what has to be noticed. (Until
+the floor rose to 3.12 the lock held three numpys at once, one per
+Python, and no single digest could speak for the whole matrix; it holds
+one now, but the key still records which.) The platform and the
+machine, because a reference recorded on linux-x86_64 has nothing to
+say about what Apple's libm will do. What is deliberately
 *not* in the key is the C library - a glibc that changes the game is the
 thing this test exists to catch, so it has to arrive as a failure and
 not as a polite lookup miss.
